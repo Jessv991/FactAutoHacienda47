@@ -1003,6 +1003,7 @@ namespace FactAutoHacienda47
                 if (precio_linea_sin_iva_con_dto == 0)
                 {
                     lineArray.price = 0;
+                    total_neto_0_exists = true;
                 }
                 else
                 {
@@ -1034,7 +1035,7 @@ namespace FactAutoHacienda47
             InvoiceArray.vatLines = new List<apiTicketBai.VatLine>();
 
 
-            if ((total_neto_21 > 0) || (total_neto_21 < 0))
+            if (((total_neto_21 > 0) || (total_neto_21 <= 0)) && total_neto_21_exists)
             {
                 var vatLine21 = new VatLine
                 {
@@ -1056,7 +1057,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine21);
             }
 
-            if ((total_neto_10 > 0) || (total_neto_10 < 0))
+            if (((total_neto_10 > 0) || (total_neto_10 <= 0)) && total_neto_10_exists)
             {
                 var vatLine10 = new VatLine
                 {
@@ -1079,7 +1080,7 @@ namespace FactAutoHacienda47
 
             }
 
-            if ((total_neto_4 > 0) || (total_neto_4 < 0))
+            if (((total_neto_4 > 0) || (total_neto_4 <= 0)) && total_neto_4_exists)
             {
                 var vatLine4 = new VatLine
                 {
@@ -1101,7 +1102,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine4);
             }
 
-            if ((total_neto_0 > 0) || (total_neto_0 < 0))
+            if (((total_neto_0 > 0) || (total_neto_0 <= 0)) && total_neto_0_exists)
             {
                 var vatLine0 = new VatLine
                 {
@@ -1408,6 +1409,7 @@ namespace FactAutoHacienda47
 
             string TBAI_Queue = Conection.SelectOnce(sql_maxTbaiQueue);
 
+
             if (string.IsNullOrEmpty(TBAI_Queue))
             {
                 MessageBox.Show("Falta el registro de la primera factura generada en Verifactu, tome una captura de pantalla de este aviso y compártala con soporte técnico.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1432,7 +1434,7 @@ namespace FactAutoHacienda47
                 Environment.Exit(0);
             }
 
-            var request2 = new RestRequest("ticketbai_api/v1/invoice_data/" + TBAI_Queue, Method.Get);
+            var request2 = new RestRequest("ticketbai_api/v1/invoice_data/" + TBAI_Queue, Method.Post);
 
 
 

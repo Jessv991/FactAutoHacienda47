@@ -477,30 +477,57 @@ namespace FactAutoHacienda47
             sql_getFechaVentaAbono = "SELECT TBAI_Codi, V.VEN_DataFactura, V.VEN_NumFactura FROM VENDA V " +
                                        "INNER JOIN FACTURAS_HACIENDA_AUTO FHA ON (FHA.VEN_NumFactura = V.VEN_NumFactura AND V.VEN_DataFactura = FHA.VEN_DataFactura) WHERE " +
                                        "V.VEN_Codi = '" + subs[0] + "' " +
-                                       "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
                                        " AND V.VEN_Tienda = '" + subs[1].Substring(0, 2) + "'";
+
             ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
 
             if (ven_abono == null || ven_abono.Rows.Count == 0)
             {
-                MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
-                Environment.Exit(0);
+                sql_getFechaVentaAbono = "SELECT V.VEN_FacTie, V.VEN_DataFactura, V.VEN_NumFactura, V.VEN_NumserieFacturacion FROM VENDA V " +
+                           "WHERE " +
+                           "V.VEN_Codi = '" + subs[0] + "' " +
+                           "AND V.VEN_Tienda = '" + subs[1].Substring(0, 2) + "'";
+                ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
+      
+
+                if (ven_abono == null || ven_abono.Rows.Count == 0)
+                {
+                    MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
+                    date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                    factura_abono_year = date_abo.ToString("yyyy");
+                    string numSerie = ven_abono.Rows[0].Field<string>("VEN_NumserieFacturacion");
+                    int numFactura = ven_abono.Rows[0].Field<int>("VEN_NumFactura");
+
+                    string serieStr = serie ?? "";
+                    string tienda = txtTienda?.Text ?? "";
+                    string year = txtYear?.Text ?? "";
+                    string numSerieStr = numSerie ?? "";
+
+                    factura_abono = $"{serieStr}{numSerieStr}/{numFactura}/{tienda}/{year}";
+                }
+
             }
-
-            date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
-            date_abo_formated = date_abo.ToString("yyyy-MM-dd");
-            factura_abono_year = date_abo.ToString("yyyy");
-            factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
-
+            else
+            {
+                date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
+                date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                factura_abono_year = date_abo.ToString("yyyy");
+                factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
+            }
 
 
             sql_recargoEquivalenciaCliente = "SELECT CLI_RecEquivalencia " +
-                    "from CLIENT c inner join VENDA v on c.TIE_Codigo = v.VEN_CliFactTie and c.CLI_Codi = v.VEN_CliFact WHERE " +
-                    "v.VEN_NumFactura = '" + txtFactura.Text + "' " +
-                    "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
-                    "AND YEAR(v.VEN_DataFactura) = '" + txtYear.Text + "' " +
-                    "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
-                    " AND v.VEN_Referencia = 'ABONO'";
+                        "from CLIENT c inner join VENDA v on c.TIE_Codigo = v.VEN_CliFactTie and c.CLI_Codi = v.VEN_CliFact WHERE " +
+                        "v.VEN_NumFactura = '" + txtFactura.Text + "' " +
+                        "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
+                        "AND YEAR(v.VEN_DataFactura) = '" + txtYear.Text + "' " +
+                        "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
+                        " AND v.VEN_Referencia = 'ABONO'";
 
             descripcion = "Factura Abono ";
 
@@ -666,26 +693,48 @@ namespace FactAutoHacienda47
                 sql_getFechaVentaAbono = "SELECT TBAI_Codi, V.VEN_DataTicket, V.VEN_Ticket FROM VENDA V " +
                                    "INNER JOIN FACTURAS_HACIENDA_AUTO FHA ON (FHA.VEN_Ticket = V.VEN_Ticket AND V.VEN_DataTicket = FHA.VEN_DataTicket) WHERE " +
                                    "V.VEN_Codi = '" + subs[0] + "' " +
-                                   "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
                                    " AND V.VEN_Tienda = '" + subs[1].Substring(0, 2) + "'";
 
                 ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
 
                 if (ven_abono == null || ven_abono.Rows.Count == 0)
                 {
-                    MessageBox.Show("No puede facturar un Abono de un Ticket no facturado (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
-                    Environment.Exit(0);
+                    sql_getFechaVentaAbono = "SELECT V.VEN_FacTie, V.VEN_DataTicket, V.VEN_Ticket, V.VEN_NumserieFacturacion FROM VENDA V " +
+                               "WHERE " +
+                               "V.VEN_Codi = '" + subs[0] + "' " +
+                               "AND V.VEN_Tienda = '" + subs[1].Substring(0, 2) + "'";
+                    ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
+
+
+                    if (ven_abono == null || ven_abono.Rows.Count == 0)
+                    {
+                        MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataTicket");
+                        date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                        factura_abono_year = date_abo.ToString("yyyy");
+                        string numSerie = ven_abono.Rows[0].Field<string>("VEN_NumserieFacturacion");
+                        int numFactura = ven_abono.Rows[0].Field<int>("VEN_Ticket");
+
+                        string serieStr = serie ?? "";
+                        string tienda = txtTienda?.Text ?? "";
+                        string year = txtYear?.Text ?? "";
+                        string numSerieStr = numSerie ?? "";
+
+                        factura_abono = $"{serieStr}{numSerieStr}/{numFactura}/{tienda}/{year}";
+                    }
+
                 }
-
-                date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataTicket");
-
-                date_abo_formated = date_abo.ToString("yyyy-MM-dd");
-
-                factura_abono_year = date_abo.ToString("yyyy");
-
-                factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
-
-
+                else
+                {
+                    date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
+                    date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                    factura_abono_year = date_abo.ToString("yyyy");
+                    factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
+                }
 
                 vendaTable = Conection.SelectRows(sql_getVentas);
 
