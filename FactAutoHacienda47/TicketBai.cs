@@ -1202,6 +1202,8 @@ namespace FactAutoHacienda47
 
             request.AddStringBody(JSONresult, DataFormat.Json); // JSONresult es tu string JSON
 
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
             RestResponse response = client.Execute(request);
 
             //Uri fullUri = client.BuildUri(request);
@@ -1440,6 +1442,8 @@ namespace FactAutoHacienda47
             request2.AddHeader("Accept", "application/json");
             request2.AddHeader("User-Agent", "RestSharpClient/1.0");
             request2.AddHeader("API-KEY", TicketBai_ApiKey.Trim());
+
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
             RestResponse respuestaApi = client2.Execute(request2);
 
@@ -1908,6 +1912,8 @@ namespace FactAutoHacienda47
             request.AddHeader("Accept", "application/json");
             request.AddHeader("User-Agent", "RestSharpClient/1.0");
             request.AddHeader("API-KEY", TicketBai_ApiKey.Trim());
+
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
             RestResponse response = client.Execute(request);
 

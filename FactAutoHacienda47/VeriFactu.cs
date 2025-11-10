@@ -1186,6 +1186,8 @@ namespace FactAutoHacienda47
             request.AddHeader("API-KEY", TicketBai_ApiKey.Trim());
             request.AddStringBody(JSONresult, DataFormat.Json); // JSONresult es tu string JSON
 
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
             RestResponse response = client.Execute(request);
 
             //Uri fullUri = client.BuildUri(request);
@@ -1415,7 +1417,7 @@ namespace FactAutoHacienda47
             }
 
 
-            var request2 = new RestRequest("verifactu/v1/invoice_data/" + TBAI_Queue, Method.Get);
+            var request2 = new RestRequest("verifactu/v1/invoice_data/" + TBAI_Queue, Method.Post);
 
 
 
@@ -1425,6 +1427,8 @@ namespace FactAutoHacienda47
             request2.AddHeader("Accept", "application/json");
             request2.AddHeader("User-Agent", "RestSharpClient/1.0");
             request2.AddHeader("API-KEY", TicketBai_ApiKey.Trim());
+
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
 
             RestResponse respuestaApi = client2.Execute(request2);
 
@@ -1777,6 +1781,7 @@ namespace FactAutoHacienda47
                 sql_updateFactura_KO = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Mensaje = ? WHERE TBAI_Queue = '" + txtFactura.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "'";
                 request = new RestRequest("verifactu/v1/invoice_state/" + txtFactura.Text, Method.Post);
                 msjReturn = "Estado actualizado correctamente";
+
             }
             else if (tipoProcesado == "D")
             {
@@ -1808,16 +1813,12 @@ namespace FactAutoHacienda47
             request.AddHeader("User-Agent", "RestSharpClient/1.0");
             request.AddHeader("API-KEY", TicketBai_ApiKey.Trim());
 
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
             RestResponse response = client.Execute(request);
-
-            //Uri fullUri = client.BuildUri(request);
-            //MessageBox.Show(fullUri.ToString());
-
             txtJson.Text = $"Status: {response.StatusCode}\n\n{response.Content}";
 
             apiVerifactu.apiResponse new_factura = JsonConvert.DeserializeObject<apiVerifactu.apiResponse>(response.Content);
-
-
 
             if ((new_factura.message == "") || (new_factura.message is null))
             {
