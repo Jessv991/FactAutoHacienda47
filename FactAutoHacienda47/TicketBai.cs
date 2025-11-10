@@ -100,7 +100,12 @@ namespace FactAutoHacienda47
         static apiVerifactu.InvoiceId InvoiceIdArray = new apiVerifactu.InvoiceId();
 
         //=============VARIABLES DE TOTAL NETO PARA CALCULAR SEGÚN EL VATLINE
-
+        static bool total_neto_21_exists = false;
+        static bool total_neto_10_exists = false;
+        static bool total_neto_7_exists = false;
+        static bool total_neto_4_exists = false;
+        static bool total_neto_3_exists = false;
+        static bool total_neto_0_exists = false;
         static Decimal total_neto_21 = 0;
         static Decimal total_neto_10 = 0;
         static Decimal total_neto_4 = 0;
@@ -391,7 +396,7 @@ namespace FactAutoHacienda47
                                         " AND (v.VEN_Referencia <> 'ABONO' OR v.VEN_Referencia is null) ";
             descripcion = "Factura ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
                           "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                           "AND YEAR(v.VEN_DataFactura) = '" + txtYear.Text + "' " +
                           "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -502,7 +507,7 @@ namespace FactAutoHacienda47
 
             descripcion = "Factura Abono ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
                                              "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                                              "AND YEAR(v.VEN_DataFactura) = '" + txtYear.Text + "' " +
                                              "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -585,7 +590,7 @@ namespace FactAutoHacienda47
 
             descripcion = "Ticket ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
                                             "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                                             "AND YEAR(v.VEN_DataTicket) = '" + txtYear.Text + "' " +
                                             "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -652,7 +657,7 @@ namespace FactAutoHacienda47
 
             descripcion = "Ticket Abono ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
                                              "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                                              "AND YEAR(v.VEN_DataTicket) = '" + txtYear.Text + "' " +
                                              "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -1001,20 +1006,23 @@ namespace FactAutoHacienda47
                 }
                 else
                 {
-
                     switch (LVN_IVA)
                     {
                         case 21:
                             total_neto_21 += precio_linea_sin_iva_con_dto;
+                            total_neto_21_exists = true;
                             break;
                         case 10:
                             total_neto_10 += precio_linea_sin_iva_con_dto;
+                            total_neto_10_exists = true;
                             break;
                         case 4:
                             total_neto_4 += precio_linea_sin_iva_con_dto;
+                            total_neto_4_exists = true;
                             break;
                         case 0:
                             total_neto_0 += precio_linea_sin_iva_con_dto;
+                            total_neto_0_exists = true;
                             break;
                     }
                 }
@@ -1815,7 +1823,7 @@ namespace FactAutoHacienda47
             CreditNoteArray.style = "I";
             CreditNote_idsArray.number = factura_abono;
             CreditNote_idsArray.serie = serie.Substring(0, 1) + "/" + txtTienda.Text + "/" + factura_abono_year;
-            CreditNote_idsArray.issuedTime = date_abo_formated + " 00:00:00";
+            CreditNote_idsArray.issuedTime = date_abo_formated;
             CreditNoteArray.ids.Add(CreditNote_idsArray);
 
             InvoiceArray.creditNote = CreditNoteArray;

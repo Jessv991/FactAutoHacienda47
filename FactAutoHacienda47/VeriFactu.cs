@@ -113,13 +113,19 @@ namespace FactAutoHacienda47
 
         //=============VARIABLES DE TOTAL NETO PARA CALCULAR SEG�N EL VATLINE
 
-        static Decimal total_neto_21 = 0;
-        static Decimal total_neto_10 = 0;
-        static Decimal total_neto_7 = 0;
-        static Decimal total_neto_4 = 0;
-        static Decimal total_neto_3 = 0;
-        static Decimal total_neto_0 = 0;
-        static Decimal total_neto = 0;
+        static Decimal total_neto_21;
+        static Decimal total_neto_10;
+        static Decimal total_neto_7;
+        static Decimal total_neto_4;
+        static Decimal total_neto_3;
+        static Decimal total_neto_0;
+        static bool total_neto_21_exists = false;
+        static bool total_neto_10_exists = false;
+        static bool total_neto_7_exists = false;
+        static bool total_neto_4_exists = false;
+        static bool total_neto_3_exists = false;
+        static bool total_neto_0_exists = false;
+        static Decimal total_neto;
         static Decimal totalAmountWithVat = 0;
         static Decimal precio_linea_sin_iva_con_dto = 0;
         static Decimal precio_linea_con_iva_sin_dto = 0;
@@ -142,6 +148,7 @@ namespace FactAutoHacienda47
 
         private void Inicio_Load(object sender, EventArgs e)
         {
+
             //string mensaje = $"Tipo: {txtTipo.Text}\nFactura: {txtFactura.Text}\nTienda: {txtTienda.Text}\nAño: {txtYear.Text}";
             //MessageBox.Show(mensaje, "Datos de Factura");
 
@@ -308,7 +315,6 @@ namespace FactAutoHacienda47
                 MessageBox.Show("Error: El tipo de factura o ticket es incorrecto.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-
         }
 
         //tipo VatType Espa�a es "S1", pero debo averiguar que tipo le toca a cada pa�s
@@ -390,7 +396,7 @@ namespace FactAutoHacienda47
                                         " AND (v.VEN_Referencia <> 'ABONO' OR v.VEN_Referencia is null) ";
             descripcion = "Factura ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
                           "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                           "AND YEAR(v.VEN_DataFactura) = '" + txtYear.Text + "' " +
                           "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -498,7 +504,7 @@ namespace FactAutoHacienda47
 
             descripcion = "Factura Abono ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_NumFactura = '" + txtFactura.Text + "' " +
                                              "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                                              "AND YEAR(v.VEN_DataFactura) = '" + txtYear.Text + "' " +
                                              "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -578,7 +584,7 @@ namespace FactAutoHacienda47
 
             descripcion = "Ticket ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
                                             "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                                             "AND YEAR(v.VEN_DataTicket) = '" + txtYear.Text + "' " +
                                             "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -636,7 +642,7 @@ namespace FactAutoHacienda47
 
             descripcion = "Ticket Abono ";
 
-            sql_getVenImportTotal = "SELECT SUM(v.VEN_ImportTotal) FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
+            sql_getVenImportTotal = "SELECT ISNULL(SUM(v.VEN_ImportTotal), 0) AS VEN_ImportTotal FROM VENDA v WHERE v.VEN_Ticket = '" + txtFactura.Text + "' " +
                                              "AND v.VEN_Tienda = '" + txtTienda.Text + "' " +
                                              "AND YEAR(v.VEN_DataTicket) = '" + txtYear.Text + "' " +
                                              "AND V.VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion +
@@ -891,7 +897,7 @@ namespace FactAutoHacienda47
             //=====================VATLINE (VatLine de factura)
 
             string slq_Iscanarias = "SELECT PAR_Valor FROM LISTA_PARAMETROS WHERE PAR_Key = 'Escanarias'";
-            string Iscanarias = Conection.SelectOnce(slq_Iscanarias); ;
+            string Iscanarias = Conection.SelectOnce(slq_Iscanarias);
 
             //vatLineArray.@base = 0;
 
@@ -916,21 +922,27 @@ namespace FactAutoHacienda47
                 {
                     case 21:
                         total_neto_21 += precio_linea_sin_iva_con_dto;
+                        total_neto_21_exists = true;
                         break;
                     case 10:
                         total_neto_10 += precio_linea_sin_iva_con_dto;
+                        total_neto_10_exists = true;
                         break;
                     case 7:
                         total_neto_7 += precio_linea_sin_iva_con_dto;
+                        total_neto_7_exists = true;
                         break;
                     case 4:
                         total_neto_4 += precio_linea_sin_iva_con_dto;
+                        total_neto_4_exists = true;
                         break;
                     case 3:
                         total_neto_3 += precio_linea_sin_iva_con_dto;
+                        total_neto_3_exists = true;
                         break;
                     case 0:
                         total_neto_0 += precio_linea_sin_iva_con_dto;
+                        total_neto_0_exists = true;
                         break;
                 }
             }
@@ -940,7 +952,7 @@ namespace FactAutoHacienda47
 
             InvoiceArray.vatLines = new List<VatLine>();
 
-            if ((total_neto_21 > 0) || (total_neto_21 < 0))
+            if (((total_neto_21 > 0) || (total_neto_21 <= 0)) && total_neto_21_exists)
             {
                 var vatLine21 = new VatLine
                 {
@@ -973,7 +985,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine21);
             }
 
-            if ((total_neto_10 > 0) || (total_neto_10 < 0))
+            if (((total_neto_10 > 0) || (total_neto_10 <= 0)) && total_neto_10_exists)
             {
                 var vatLine10 = new VatLine
                 {
@@ -1004,7 +1016,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine10);
             }
 
-            if ((total_neto_7 > 0) || (total_neto_7 < 0))
+            if (((total_neto_7 > 0) || (total_neto_7 <= 0)) && total_neto_7_exists)
             {
                 var vatLine7 = new VatLine
                 {
@@ -1022,7 +1034,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine7);
             }
 
-            if ((total_neto_4 > 0) || (total_neto_4 < 0))
+            if (((total_neto_4 > 0) || (total_neto_4 <= 0)) && total_neto_4_exists)
             {
                 var vatLine4 = new VatLine
                 {
@@ -1052,7 +1064,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine4);
             }
 
-            if ((total_neto_3 > 0) || (total_neto_3 < 0))
+            if (((total_neto_3 > 0) || (total_neto_3 <= 0)) && total_neto_3_exists)
             {
                 var vatLine3 = new VatLine
                 {
@@ -1070,7 +1082,7 @@ namespace FactAutoHacienda47
                 InvoiceArray.vatLines.Add(vatLine3);
             }
 
-            if ((total_neto_0 > 0) || (total_neto_0 < 0))
+            if (((total_neto_0 > 0) || (total_neto_0 <= 0)) && total_neto_0_exists)
             {
                 var vatLine0 = new VatLine
                 {
@@ -1729,7 +1741,7 @@ namespace FactAutoHacienda47
             CreditNoteArray.style = "I";//OJO hacer un array de apiCreditNote ***********
             //InvoiceIdArray.serie = serie.Substring(0, 1) + "/" + txtTienda.Text + "/" + factura_abono_year;
             InvoiceIdArray.number = factura_abono;
-            InvoiceIdArray.issuedTime = date_formated;
+            InvoiceIdArray.issuedTime = date_abo_formated;
             CreditNoteArray.ids.Add(InvoiceIdArray);
 
             InvoiceArray.creditNote = CreditNoteArray;
@@ -1927,5 +1939,6 @@ namespace FactAutoHacienda47
         {
             txtReenvio.Text = value;
         }
+
     }
 }
