@@ -19,7 +19,7 @@ namespace FactAutoHacienda47
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             //ApplicationConfiguration.Initialize();
-            if (args.Length < 2)
+            if (args.Length < 1)
             {
                 MessageBox.Show("Programa ejecutado con éxito. El programa necesita al menos 2 argumentos: Factura y Tienda.",
                                 "Error de parámetros", MessageBoxButtons.OK, MessageBoxIcon.Information);
