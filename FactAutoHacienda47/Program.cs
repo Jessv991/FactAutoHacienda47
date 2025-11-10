@@ -19,7 +19,13 @@ namespace FactAutoHacienda47
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             //ApplicationConfiguration.Initialize();
-
+            if (args.Length < 2)
+            {
+                MessageBox.Show("Programa ejecutado con éxito. El programa necesita al menos 2 argumentos: Factura y Tienda.",
+                                "Error de parámetros", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Application.Exit();
+                return;
+            }
             string tienda = args[1];
 
             string sql = $"SELECT PAR_Valor FROM TIENDADATOS WHERE TIE_Codigo = '{tienda}' AND PAR_Key = 'TicketBai_Tipo';";
@@ -31,7 +37,7 @@ namespace FactAutoHacienda47
 
                 //MessageBox.Show("Entró a verifactu");
                 VeriFactu form = new VeriFactu();
-
+                
                 if (args.Length >= 3)
                 {
                     form.getVEN_Tipo(args[0]);
