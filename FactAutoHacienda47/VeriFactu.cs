@@ -1610,12 +1610,12 @@ namespace FactAutoHacienda47
                     if (TipoFact2 == "F" || TipoFact2 == "FA")
                     {
 
-                        consultaSQLventa = "UPDATE VENDA SET VEN_NumFactura =?, VEN_Factura =?, VEN_DataFactura =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda + " AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion;
+                        consultaSQLventa = "UPDATE VENDA SET VEN_NumFactura =?, VEN_Factura =?, VEN_DataFactura =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
 
                     }
                     else
                     {
-                        consultaSQLventa = "UPDATE VENDA SET VEN_Ticket =?, VEN_DataTicket =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda + " AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion;
+                        consultaSQLventa = "UPDATE VENDA SET VEN_Ticket =?, VEN_DataTicket =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
 
                     }
 
