@@ -315,7 +315,7 @@ namespace FactAutoHacienda47
 
         public void sameSQLFacturas()
         {
-            sql_checkTbaiCodi = "SELECT TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "' AND VEN_NumFactura = '" + txtFactura.Text + "'";
+            sql_checkTbaiCodi = "SELECT TBAI_Codi, TBAI_Simple FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "' AND VEN_NumFactura = '" + txtFactura.Text + "'";
 
             sql_getTbaiCodi = "SELECT MAX(TBAI_Codi) + 1 as TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "'";
 
@@ -405,7 +405,14 @@ namespace FactAutoHacienda47
             //================DATOS DEL CLIENTE================
 
 
-            string checkIfExist = Conection.SelectOnce(sql_checkTbaiCodi);
+            DataTable tabletExistAndSimple = Conection.SelectRows(sql_checkTbaiCodi);
+            string checkIfExist = "";
+            string checkSimple = "";
+            if (tabletExistAndSimple.Rows.Count > 0)
+            {
+                checkIfExist = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi").ToString();
+                checkSimple = tabletExistAndSimple.Rows[0].Field<string>("TBAI_Simple").ToString();
+            }
 
             if (string.IsNullOrEmpty(checkIfExist) || txtReenvio.Text == "R" || txtReenvio.Text == "S")
             {
@@ -430,7 +437,7 @@ namespace FactAutoHacienda47
 
 
 
-                if ((ImporTotalCheck >= importe_minimo) || txtReenvio.Text == "S" || txtReenvio.Text == "D")
+                if ((ImporTotalCheck >= importe_minimo) || txtReenvio.Text == "S" || txtReenvio.Text == "D" || checkSimple == "N")
                 {
                     sqlTBAI_Simple = "N";
                     this.sameSQLFacturas();
@@ -514,7 +521,14 @@ namespace FactAutoHacienda47
                                              " AND v.VEN_Referencia = 'ABONO'";
 
 
-            string checkIfExist = Conection.SelectOnce(sql_checkTbaiCodi);
+            DataTable tabletExistAndSimple = Conection.SelectRows(sql_checkTbaiCodi);
+            string checkIfExist = "";
+            string checkSimple = "";
+            if (tabletExistAndSimple.Rows.Count > 0)
+            {
+                checkIfExist = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi").ToString();
+                checkSimple = tabletExistAndSimple.Rows[0].Field<string>("TBAI_Simple").ToString();
+            }
 
             if (string.IsNullOrEmpty(checkIfExist) || txtReenvio.Text == "R" || txtReenvio.Text == "S")
             {
@@ -539,7 +553,7 @@ namespace FactAutoHacienda47
 
 
                 //================DATOS DEL CLIENTE================
-                if ((ImporTotalCheck >= importe_minimo) || txtReenvio.Text == "S" || txtReenvio.Text == "D")
+                if ((ImporTotalCheck >= importe_minimo) || txtReenvio.Text == "S" || txtReenvio.Text == "D" || checkSimple == "N")
                 {
                     sqlTBAI_Simple = "N";
                     this.sameSQLFacturas();
