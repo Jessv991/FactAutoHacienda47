@@ -410,7 +410,12 @@ namespace FactAutoHacienda47
             string checkSimple = "";
             if (tabletExistAndSimple.Rows.Count > 0)
             {
-                checkIfExist = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi").ToString();
+                var valor = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi");
+
+                if (valor != null && valor != DBNull.Value)
+                {
+                    checkIfExist = valor.ToString();
+                }
                 checkSimple = tabletExistAndSimple.Rows[0].Field<string>("TBAI_Simple").ToString();
             }
 
@@ -526,7 +531,12 @@ namespace FactAutoHacienda47
             string checkSimple = "";
             if (tabletExistAndSimple.Rows.Count > 0)
             {
-                checkIfExist = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi").ToString();
+                var valor = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi");
+
+                if (valor != null && valor != DBNull.Value)
+                {
+                    checkIfExist = valor.ToString();
+                }
                 checkSimple = tabletExistAndSimple.Rows[0].Field<string>("TBAI_Simple").ToString();
             }
 
