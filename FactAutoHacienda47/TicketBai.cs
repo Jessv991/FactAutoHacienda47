@@ -21,6 +21,8 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static FactAutoHacienda47.apiTicketBai;
 using static FactAutoHacienda47.pathServer;
 using System.IO;
+using System.Net.Mail;
+using System.Net;
 
 namespace FactAutoHacienda47
 {
@@ -68,6 +70,8 @@ namespace FactAutoHacienda47
         static DataTable ven_abono = new DataTable();
         static DataTable vendaTable = new DataTable();
         static DataTable factCancelar = new DataTable();
+        static DataTable TBAI_Queue_Tablet = new DataTable();
+        static DataTable TBAI_Queue_TabletOldFormat = new DataTable();
         static DataTable datosIssureTiendaTable = new DataTable();
         static DateTime date_abo = new DateTime();
         static string date_abo_formated = "";
@@ -81,7 +85,9 @@ namespace FactAutoHacienda47
         static string date_formated = System.String.Empty;
         static string nombre_cliente = System.String.Empty;
         static string TBAI_FacturaSustituida = System.String.Empty;
+        static string Save_TBAI_Queue_For_Later = System.String.Empty;
         static bool consultAgainTBAI_Codi = false;
+        static bool AnteriosVerifactu = false;
 
         //=============ARRAYS DE LA API PARA ARMAR INVOICE
         static ArrayList ids = new ArrayList();
@@ -132,6 +138,7 @@ namespace FactAutoHacienda47
         static string tipoProcesado;
         static string condicionVEN_NumserieFacturacion = "IS NULL";
         static string sqlTBAI_Simple = "S";
+        static string TBAI_Queue = "";
         static HashSet<string> tiposValidos = new HashSet<string> { "F", "FA", "T", "TA" };
 
         private void TicketBai_Load(object sender, EventArgs e)
@@ -154,6 +161,9 @@ namespace FactAutoHacienda47
                 sql_getListaParametros = "SELECT PAR_Valor FROM TIENDADATOS WHERE TIE_Codigo = " + txtTienda.Text + " AND PAR_Key = 'TicketBai_ApiKey'";
                 TicketBai_ApiKey = Conection.SelectOnce(sql_getListaParametros); //consulta para optiner 'TicketBai_ApiKey'
             }
+            //tipoOriginal = txtTipo.Text.ToUpper(); // Asegura mayúsculas
+            //this.sameSQLFacturas();
+            //this.consultDuplicate();
 
             if (string.IsNullOrEmpty(TicketBai_DB))
             {
@@ -348,7 +358,7 @@ namespace FactAutoHacienda47
 
         public void sameSQLTicket()
         {
-            sql_checkTbaiCodi = "SELECT TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "' AND VEN_Ticket = '" + txtFactura.Text + "'";//esto es para DF (no va aqu�)
+            sql_checkTbaiCodi = "SELECT TBAI_Codi, TBAI_Simple FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "' AND VEN_Ticket = '" + txtFactura.Text + "'";//esto es para DF (no va aqu�)
 
             sql_getTbaiCodi = "SELECT MAX(TBAI_Codi) + 1 as TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "'";
 
@@ -498,14 +508,44 @@ namespace FactAutoHacienda47
 
             if (ven_abono == null || ven_abono.Rows.Count == 0)
             {
-                MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
-                Environment.Exit(0);
+                sql_getFechaVentaAbono = "SELECT V.VEN_FacTie, V.VEN_DataFactura, V.VEN_NumFactura, V.VEN_NumserieFacturacion FROM VENDA V " +
+                           "WHERE " +
+                           "V.VEN_Codi = '" + subs[0] + "' " +
+                           "AND V.VEN_Tienda = '" + subs[1].Substring(0, 2) + "'";
+                ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
+
+
+                if (ven_abono == null || ven_abono.Rows.Count == 0)
+                {
+                    MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
+                    date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                    factura_abono_year = date_abo.ToString("yyyy");
+                    string numSerie = ven_abono.Rows[0].Field<string>("VEN_NumserieFacturacion");
+                    int numFactura = ven_abono.Rows[0].Field<int>("VEN_NumFactura");
+
+                    string serieStr = serie ?? "";
+                    string tienda = txtTienda?.Text ?? "";
+                    string year = txtYear?.Text ?? "";
+                    string numSerieStr = numSerie ?? "";
+
+                    factura_abono = $"{serieStr}{numSerieStr}/{numFactura}/{tienda}/{year}";
+                }
+
+                AnteriosVerifactu = true;
+            }
+            else
+            {
+                date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
+                date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                factura_abono_year = date_abo.ToString("yyyy");
+                factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
             }
 
-            date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
-            date_abo_formated = date_abo.ToString("yyyy-MM-dd");
-            factura_abono_year = date_abo.ToString("yyyy");
-            factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
 
 
 
@@ -713,17 +753,44 @@ namespace FactAutoHacienda47
 
                 if (ven_abono == null || ven_abono.Rows.Count == 0)
                 {
-                    MessageBox.Show("No puede facturar un Abono de un Ticket no facturado (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
-                    Environment.Exit(0);
+                    sql_getFechaVentaAbono = "SELECT V.VEN_FacTie, V.VEN_DataTicket, V.VEN_Ticket, V.VEN_NumserieFacturacion FROM VENDA V " +
+                               "WHERE " +
+                               "V.VEN_Codi = '" + subs[0] + "' " +
+                               "AND V.VEN_Tienda = '" + subs[1].Substring(0, 2) + "'";
+                    ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
+
+
+                    if (ven_abono == null || ven_abono.Rows.Count == 0)
+                    {
+                        MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataTicket");
+                        date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                        factura_abono_year = date_abo.ToString("yyyy");
+                        string numSerie = ven_abono.Rows[0].Field<string>("VEN_NumserieFacturacion");
+                        int numFactura = ven_abono.Rows[0].Field<int>("VEN_Ticket");
+
+                        string serieStr = serie ?? "";
+                        string tienda = txtTienda?.Text ?? "";
+                        string year = txtYear?.Text ?? "";
+                        string numSerieStr = numSerie ?? "";
+
+                        factura_abono = $"{serieStr}{numSerieStr}/{numFactura}/{tienda}/{year}";
+                    }
+
+                    AnteriosVerifactu = true;
+                }
+                else
+                {
+                    date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataTicket");
+                    date_abo_formated = date_abo.ToString("yyyy-MM-dd");
+                    factura_abono_year = date_abo.ToString("yyyy");
+                    factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
                 }
 
-                date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataTicket");
-
-                date_abo_formated = date_abo.ToString("yyyy-MM-dd");
-
-                factura_abono_year = date_abo.ToString("yyyy");
-
-                factura_abono = ven_abono.Rows[0].Field<Int32>("TBAI_Codi").ToString();
 
 
 
@@ -940,7 +1007,7 @@ namespace FactAutoHacienda47
             if (txtReenvio.Text == "S")
             {
                 InvoiceArray.replacedTicketIds = new List<apiTicketBai.Invoice_id_Substitution>();
-                string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo = '" + txtTipo.Text + "' AND FACT_Tienda = " + txtTienda.Text + " AND VEN_NumFactura = " + txtFactura.Text + " AND TBAI_Simple = 'S' AND YEAR(VEN_DataFactura) = " + txtYear.Text;
+                string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo = '" + txtTipo.Text + "' AND FACT_Tienda = " + txtTienda.Text + " AND VEN_NumFactura = " + txtFactura.Text + " AND TBAI_Queue <> '' or TBAI_Queue <> null AND YEAR(VEN_DataFactura) = " + txtYear.Text;
                 factCancelar = Conection.SelectRows(sql_VEN_DataFactura);
                 string VEN_DataFactura = factCancelar.Rows[0].Field<DateTime>("VEN_DataFactura").ToString();
                 string TBAI_Codi = factCancelar.Rows[0].Field<Int32>("TBAI_Codi").ToString();
@@ -1391,54 +1458,81 @@ namespace FactAutoHacienda47
             int ventaNumero = 0;
             int numFacturaOld = 0;
             int TBAI_CodiOld = 0;
-            int VEN_CodiFactSent = 0;
+            int TBAI_QueueInt = 0;
+            bool isOld = false;
+            int VEN_CodiFactSent = 0; //PONER VALOR 0
             int.TryParse(venCodigo, out VEN_CodiFactSent);
+            DataRow fila = null;
 
-            sql_maxTbaiQueue = @"SELECT 
-                                    CAST(ISNULL((
-                                        SELECT MIN(f1.TBAI_Queue) + 1
-                                        FROM FACTURAS_HACIENDA_AUTO AS f1
-                                        INNER JOIN TIENDADATOS AS t1 
-                                            ON f1.FACT_Tienda = t1.TIE_Codigo 
-                                            AND t1.PAR_Key = 'TicketBai_DB'
-                                        WHERE 
-                                            (YEAR(f1.ven_dataFactura) = '" + txtYear.Text + @"' 
-                                             OR YEAR(f1.ven_dataticket) = '" + txtYear.Text + @"')
-                                            AND t1.PAR_Valor = '" + TicketBai_DB + @"'
-                                            AND NOT EXISTS (
-                                                SELECT 1
-                                                FROM FACTURAS_HACIENDA_AUTO AS f2
-                                                INNER JOIN TIENDADATOS AS t2 
-                                                    ON f2.FACT_Tienda = t2.TIE_Codigo 
-                                                    AND t2.PAR_Key = 'TicketBai_DB'
-                                                WHERE 
-                                                    f2.TBAI_Queue = f1.TBAI_Queue + 1
-                                                    AND (YEAR(f2.ven_dataFactura) = '" + txtYear.Text + @"' 
-                                                         OR YEAR(f2.ven_dataticket) = '" + txtYear.Text + @"')
-                                                    AND t2.PAR_Valor = '" + TicketBai_DB + @"'
-                                            )
-                                    ), 
-                                    (
-                                        SELECT MAX(f3.TBAI_Queue) + 1
-                                        FROM FACTURAS_HACIENDA_AUTO AS f3
-                                        INNER JOIN TIENDADATOS AS t3 
-                                            ON f3.FACT_Tienda = t3.TIE_Codigo 
-                                            AND t3.PAR_Key = 'TicketBai_DB'
-                                        WHERE 
-                                            (YEAR(f3.ven_dataFactura) = '" + txtYear.Text + @"' 
-                                             OR YEAR(f3.ven_dataticket) = '" + txtYear.Text + @"')
-                                            AND t3.PAR_Valor = '" + TicketBai_DB + @"'
-                                    )) AS INT) AS NextQueueValue";
-
-
-            string TBAI_Queue = Conection.SelectOnce(sql_maxTbaiQueue);
-
-
-            if (string.IsNullOrEmpty(TBAI_Queue))
+            if (string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && string.IsNullOrEmpty(TBAI_Queue) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
             {
-                MessageBox.Show("Falta el registro de la primera factura generada en Verifactu, tome una captura de pantalla de este aviso y compártala con soporte técnico.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Environment.Exit(0);
+                sql_maxTbaiQueue = @"WITH Queues AS (
+                                    SELECT f.FACT_Codi,
+                                           f.Tbai_Codi,
+                                           f.Fact_Tienda,
+                                           CONVERT(int,f.TBAI_Queue) AS QueueNum,
+                                           db.par_valor AS TicketBAI_DB
+                                    FROM FACTURAS_HACIENDA_AUTO f
+                                    JOIN TIENDADATOS db
+                                      ON f.Fact_Tienda = db.TIE_Codigo
+                                     AND db.par_key = 'TicketBAI_DB' 
+                                     AND db.par_valor='" + TicketBai_DB + @"'
+                                    JOIN TIENDADATOS activo
+                                      ON f.Fact_Tienda = activo.TIE_Codigo
+                                     AND activo.par_key = 'TicketBAI_Activo'
+                                     AND activo.par_valor = 'S'
+                                     WHERE (YEAR(VEN_DataFactura) = '" + txtYear.Text + @"' OR YEAR(VEN_DataTicket) = '" + txtYear.Text + @"')
+                                )
+                                , MaxQueue AS (
+                                    SELECT TicketBAI_DB, MAX(QueueNum) AS MaxQueueNum
+                                    FROM Queues
+                                    GROUP BY TicketBAI_DB
+                                )
+                                SELECT 
+                                       (q1.QueueNum + 1) AS MissingQueue
+                                FROM Queues q1
+                                LEFT JOIN Queues q2
+                                  ON q1.TicketBAI_DB = q2.TicketBAI_DB
+                                AND q1.QueueNum + 1 = q2.QueueNum
+                                JOIN MaxQueue mq
+                                  ON q1.TicketBAI_DB = mq.TicketBAI_DB
+                                WHERE q2.QueueNum IS NULL
+                                  AND q1.QueueNum < mq.MaxQueueNum
+                                ORDER BY q1.TicketBAI_DB, MissingQueue";
+
+
+                TBAI_Queue_Tablet = Conection.SelectRows(sql_maxTbaiQueue);
+
+                if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
+                {
+                    string sql_the_latest_TBAI_Queue = "SELECT MAX(f.TBAI_Queue)FROM FACTURAS_HACIENDA_AUTO f INNER JOIN TIENDADATOS t ON f.FACT_Tienda = t.TIE_Codigo WHERE t.PAR_Valor = '" + TicketBai_DB + "'";
+                    string TBAI_Queue = Conection.SelectOnce(sql_the_latest_TBAI_Queue);
+                    int.TryParse(TBAI_Queue, out TBAI_QueueInt);
+                    TBAI_QueueInt = TBAI_QueueInt + 1;
+                    TBAI_Queue = TBAI_QueueInt.ToString();
+                    TBAI_Queue_Tablet.Rows.Add(TBAI_Queue);
+                }
             }
+
+            if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
+            {
+                fila = TBAI_Queue_Tablet.Rows[0];
+            }
+
+            if ((TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0) && string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && string.IsNullOrEmpty(TBAI_Queue))
+            {
+                string sql_the_latest_TBAI_Queue = "SELECT MAX(f.TBAI_Queue)FROM FACTURAS_HACIENDA_AUTO f INNER JOIN TIENDADATOS t ON f.FACT_Tienda = t.TIE_Codigo WHERE t.PAR_Valor = '" + TicketBai_DB + "'";
+                TBAI_Queue = Conection.SelectOnce(sql_the_latest_TBAI_Queue);
+                int.TryParse(TBAI_Queue, out TBAI_QueueInt);
+                TBAI_QueueInt = TBAI_QueueInt + 1;
+                TBAI_Queue = TBAI_QueueInt.ToString();
+            }
+            else if((TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0) && string.IsNullOrEmpty(TBAI_Queue))
+            {
+                TBAI_Queue = fila["MissingQueue"].ToString();
+                TBAI_Queue_Tablet.Rows.RemoveAt(0);// 3️⃣ Eliminarlo de la tabla para pasar al siguiente
+            }
+
 
             //string TBAI_Queue = "400";
             RestClient client2 = null;
@@ -1564,98 +1658,115 @@ namespace FactAutoHacienda47
                     }
 
 
-                    if (matchNombre.Success && matchTienda.Success && matchVenta.Success)
+                    if (matchTienda.Success)
+                    {
+                        int.TryParse(matchTienda.Groups[1].Value, out tienda);
+                    }
+                    
+                    if (matchNombre.Success && matchVenta.Success)
                     {
                         nombreCli = matchNombre.Groups[1].Value.Trim();
-                        int.TryParse(matchTienda.Groups[1].Value, out tienda);
                         int.TryParse(matchVenta.Groups[1].Value, out ventaNumero);
                         yearFactExpresion = $@"{Regex.Escape(tienda.ToString())}\/(\d{{4}})\/";
                     }
 
                     if (ventaNumero == 0)
                     {
-                        MessageBox.Show("Factura con Queue '" + TBAI_Queue + "' y con formato antiguo y sin registro en la base de datos. Por favor, tome una captura de pantalla de este aviso y compártala con soporte técnico.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        Environment.Exit(0);
-                    }
-
-                    Match matchYearFact = Regex.Match(datosFactura, yearFactExpresion);
-
-                    if (matchYearFact.Success)
-                    {
-                        yearFact = matchYearFact.Groups[1].Value.Trim();
-                    }
-
-                    if (TipoFact2 == "F")
-                    {
-                        textTipoFact = "la Factura";
-                        sqlSiguenteNumFact = "SELECT TOP 1 VEN_NumFactura + 1 AS nextFactura FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND (VEN_Referencia IS NULL OR VEN_Referencia = '') AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_NumFactura DESC";
-                    }
-                    else if (TipoFact2 == "FA")
-                    {
-                        textTipoFact = "la Factura Abono";
-                        sqlSiguenteNumFact = "SELECT TOP 1 VEN_NumFactura + 1 AS nextFacturaAbono FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND VEN_Referencia = 'ABONO' AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_NumFactura DESC";
-                    }
-                    else if (TipoFact2 == "T")
-                    {
-                        textTipoFact = "el Ticket";
-                        sqlSiguenteNumFact = "SELECT TOP 1 VEN_Ticket + 1 AS nextTicket FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND (VEN_Referencia IS NULL OR VEN_Referencia = '') AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_Ticket DESC";
-                    }
-                    else if (TipoFact2 == "TA")
-                    {
-                        textTipoFact = "el Ticket Abono";
-                        sqlSiguenteNumFact = "SELECT TOP 1 VEN_Ticket + 1 AS nextTicketAbono FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND VEN_Referencia = 'ABONO' AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_Ticket DESC";
-                    }
-
-                    //=====================OBTENER EL VEN_NumFactura DE LA RESPUESTA QUE NOS ARROJA LA API=====================
-                    if (VEN_CodiFactSent == ventaNumero)
-                    {
-                        siguenteNumFact = txtFactura.Text;
+                        numFacturaOld = -1;
+                        isOld = true;
                     }
                     else
                     {
-                        siguenteNumFact = Conection.SelectOnce(sqlSiguenteNumFact);
-                    }
-                    int.TryParse(siguenteNumFact, out numFacturaOld);
-
-                    string consultaSQLventa = "";
-
-                    if (TipoFact2 == "F" || TipoFact2 == "FA")
-                    {
-
-                        consultaSQLventa = "UPDATE VENDA SET VEN_NumFactura =?, VEN_Factura =?, VEN_DataFactura =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
-
-                    }
-                    else
-                    {
-                        consultaSQLventa = "UPDATE VENDA SET VEN_Ticket =?, VEN_DataTicket =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
-
+                        isOld = false;
                     }
 
-                    using (cmd2 = new System.Data.Odbc.OdbcCommand())
+                    if (isOld == false)
                     {
-                        cmd2.CommandText = consultaSQLventa;
-                        System.Data.Odbc.OdbcParameter paramVEN_NumFactura = new System.Data.Odbc.OdbcParameter();
-                        paramVEN_NumFactura.OdbcType = System.Data.Odbc.OdbcType.Int;
-                        paramVEN_NumFactura.Value = numFacturaOld;
-                        cmd2.Parameters.Add(paramVEN_NumFactura);
+                        Match matchYearFact = Regex.Match(datosFactura, yearFactExpresion);
+
+                        if (matchYearFact.Success)
+                        {
+                            yearFact = matchYearFact.Groups[1].Value.Trim();
+                        }
+
+                        if (TipoFact2 == "F")
+                        {
+                            textTipoFact = "la Factura";
+                            sqlSiguenteNumFact = "SELECT TOP 1 VEN_NumFactura + 1 AS nextFactura FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND (VEN_Referencia IS NULL OR VEN_Referencia = '') AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_NumFactura DESC";
+                        }
+                        else if (TipoFact2 == "FA")
+                        {
+                            textTipoFact = "la Factura Abono";
+                            sqlSiguenteNumFact = "SELECT TOP 1 VEN_NumFactura + 1 AS nextFacturaAbono FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND VEN_Referencia = 'ABONO' AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_NumFactura DESC";
+                        }
+                        else if (TipoFact2 == "T")
+                        {
+                            textTipoFact = "el Ticket";
+                            sqlSiguenteNumFact = "SELECT TOP 1 VEN_Ticket + 1 AS nextTicket FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND (VEN_Referencia IS NULL OR VEN_Referencia = '') AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_Ticket DESC";
+                        }
+                        else if (TipoFact2 == "TA")
+                        {
+                            textTipoFact = "el Ticket Abono";
+                            sqlSiguenteNumFact = "SELECT TOP 1 VEN_Ticket + 1 AS nextTicketAbono FROM VENDA WHERE VEN_Tienda = " + tienda + " AND YEAR(VEN_Data) = '" + yearFact + "' AND VEN_Referencia = 'ABONO' AND VEN_NumserieFacturacion " + condicionVEN_NumserieFacturacion + " ORDER BY VEN_Ticket DESC";
+                        }
+
+                        //=====================OBTENER EL VEN_NumFactura DE LA RESPUESTA QUE NOS ARROJA LA API=====================
+                        if (VEN_CodiFactSent == ventaNumero)
+                        {
+                            siguenteNumFact = txtFactura.Text;
+                        }
+                        else
+                        {
+                            siguenteNumFact = Conection.SelectOnce(sqlSiguenteNumFact);
+                        }
+                        int.TryParse(siguenteNumFact, out numFacturaOld);
+
+                        string consultaSQLventa = "";
+
                         if (TipoFact2 == "F" || TipoFact2 == "FA")
                         {
-                            System.Data.Odbc.OdbcParameter paramVEN_Factura = new System.Data.Odbc.OdbcParameter();
-                            paramVEN_Factura.OdbcType = System.Data.Odbc.OdbcType.Text;
-                            paramVEN_Factura.Value = "S";
-                            cmd2.Parameters.Add(paramVEN_Factura);
+
+                            consultaSQLventa = "UPDATE VENDA SET VEN_NumFactura =?, VEN_Factura =?, VEN_DataFactura =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
+
                         }
-                        System.Data.Odbc.OdbcParameter paramVEN_DataFactura = new System.Data.Odbc.OdbcParameter();
-                        paramVEN_DataFactura.OdbcType = System.Data.Odbc.OdbcType.Date;
-                        paramVEN_DataFactura.Value = dataFactura;
-                        cmd2.Parameters.Add(paramVEN_DataFactura);
-                        System.Data.Odbc.OdbcParameter paramVEN_DataDoc = new System.Data.Odbc.OdbcParameter();
-                        paramVEN_DataDoc.OdbcType = System.Data.Odbc.OdbcType.Date;
-                        paramVEN_DataDoc.Value = dataFactura;
-                        cmd2.Parameters.Add(paramVEN_DataDoc);
-                        Conection.ExecuteCommand(cmd2);
+                        else
+                        {
+                            consultaSQLventa = "UPDATE VENDA SET VEN_Ticket =?, VEN_DataTicket =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
+
+                        }
+
+                        using (cmd2 = new System.Data.Odbc.OdbcCommand())
+                        {
+                            cmd2.CommandText = consultaSQLventa;
+                            System.Data.Odbc.OdbcParameter paramVEN_NumFactura = new System.Data.Odbc.OdbcParameter();
+                            paramVEN_NumFactura.OdbcType = System.Data.Odbc.OdbcType.Int;
+                            paramVEN_NumFactura.Value = numFacturaOld;
+                            cmd2.Parameters.Add(paramVEN_NumFactura);
+                            if (TipoFact2 == "F" || TipoFact2 == "FA")
+                            {
+                                System.Data.Odbc.OdbcParameter paramVEN_Factura = new System.Data.Odbc.OdbcParameter();
+                                paramVEN_Factura.OdbcType = System.Data.Odbc.OdbcType.Text;
+                                paramVEN_Factura.Value = "S";
+                                cmd2.Parameters.Add(paramVEN_Factura);
+                            }
+                            System.Data.Odbc.OdbcParameter paramVEN_DataFactura = new System.Data.Odbc.OdbcParameter();
+                            paramVEN_DataFactura.OdbcType = System.Data.Odbc.OdbcType.Date;
+                            paramVEN_DataFactura.Value = dataFactura;
+                            cmd2.Parameters.Add(paramVEN_DataFactura);
+                            System.Data.Odbc.OdbcParameter paramVEN_DataDoc = new System.Data.Odbc.OdbcParameter();
+                            paramVEN_DataDoc.OdbcType = System.Data.Odbc.OdbcType.Date;
+                            paramVEN_DataDoc.Value = dataFactura;
+                            cmd2.Parameters.Add(paramVEN_DataDoc);
+                            Conection.ExecuteCommand(cmd2);
+                        }
                     }
-                    AlertMessage = "No estaba registrado en la Base de Datos " + textTipoFact + " Nº " + numFacturaOld + " del cliente " + nombreCli + " y con fecha " + dataFactura + ". Hemos realizado su registro";
+                    else
+                    {
+                        TBAI_Queue_TabletOldFormat.Columns.Add("Queue", typeof(string));
+                        TBAI_Queue_TabletOldFormat.Rows.Add(TBAI_Queue);
+                    }
+
+                        AlertMessage = "No estaba registrado en la Base de Datos " + textTipoFact + " Nº " + numFacturaOld + " del cliente " + nombreCli + " y con fecha " + dataFactura + ". Hemos realizado su registro";
                 }
                 else
                 {
@@ -1734,9 +1845,18 @@ namespace FactAutoHacienda47
                         {
                             TBAI_Simple = "S";
                         }
+
                         if (VEN_CodiFactSent == ventaNumero)
                         {
                             cmdInsert.CommandText = sql_updateFactura;
+                            
+                            
+                            if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
+                            {
+                                Save_TBAI_Queue_For_Later = TBAI_Queue;
+                                TBAI_Queue = "";
+                                this.consultDuplicate();
+                            }
                         }
                         else
                         {
@@ -1757,6 +1877,13 @@ namespace FactAutoHacienda47
                         if (VEN_CodiFactSent == ventaNumero)
                         {
                             cmdInsert.CommandText = sql_updateFactura;
+
+                            if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
+                            {
+                                Save_TBAI_Queue_For_Later = TBAI_Queue;
+                                TBAI_Queue = "";
+                                this.consultDuplicate();
+                            }
                         }
                         else
                         {
@@ -1824,17 +1951,34 @@ namespace FactAutoHacienda47
                 //<TargetFramework>net8.0-windows7.0</TargetFramework>
 
 
-                MessageBox.Show(AlertMessage);
 
-                if (VEN_CodiFactSent == ventaNumero)
+                if (VEN_CodiFactSent == ventaNumero && string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
                 {
+                    if (TBAI_Queue_TabletOldFormat != null && TBAI_Queue_TabletOldFormat.Rows.Count > 0)
+                    {
+                        this.sendMain();
+                    }
+                    MessageBox.Show(AlertMessage);
                     Environment.Exit(0);
                 }
-                else
+                else if(string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
                 {
+                    TBAI_Queue = "";
                     consultAgainTBAI_Codi = true;
                     this.apiConnectioSendJson();
+                }else
+                {
+                    TBAI_Queue = "";
+
+                    if (!string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
+                    {
+                        TBAI_Queue = Save_TBAI_Queue_For_Later;
+                        Save_TBAI_Queue_For_Later = "";
+                    }
+
+                    this.consultDuplicate();
                 }
+
             }
             else if (old_factura.message == "Invoice not found in queue")
             {
@@ -1845,15 +1989,81 @@ namespace FactAutoHacienda47
 
         }
 
+        public void sendMain()
+        {
+            if (TBAI_Queue_TabletOldFormat != null && TBAI_Queue_TabletOldFormat.Rows.Count > 0)
+            {
+                int cantidadErrores = TBAI_Queue_TabletOldFormat.Rows.Count;
+                string nombreOpt = datosIssureTiendaTable.Rows[0].Field<string>("RegMercantil").ToString().Trim();
 
+                StringBuilder cuerpoMensaje = new StringBuilder();
+                cuerpoMensaje.AppendLine("<html><body>");
+                cuerpoMensaje.AppendLine($"<h3>Se registraron {cantidadErrores} factura con Nº '-1' a la tienda {txtTienda.Text} de la empresa {nombreOpt} en la tabla FACTURAS_HACIENDA_AUTO:</h3>");
+                cuerpoMensaje.AppendLine($"<p>Por favor hacer el debido registro en las ventas con las que se relacionan</p>");
+                cuerpoMensaje.AppendLine("<table border='1' cellspacing='0' cellpadding='6' style='border-collapse: collapse; font-family: Arial; font-size: 13px;'>");
+                cuerpoMensaje.AppendLine("<tr style='background-color: #f2f2f2; font-weight: bold; text-align: left;'>");
+                cuerpoMensaje.AppendLine("<th>TBAI_Queue</th>");
+                cuerpoMensaje.AppendLine("</tr>");
+
+                foreach (DataRow fila in TBAI_Queue_TabletOldFormat.Rows)
+                {
+                    string venta = fila["Queue"].ToString();
+
+                    cuerpoMensaje.AppendLine("<tr>");
+                    cuerpoMensaje.AppendLine($"<td>{venta}</td>");
+                    cuerpoMensaje.AppendLine("</tr>");
+                }
+
+                cuerpoMensaje.AppendLine("</table>");
+                cuerpoMensaje.AppendLine("<br><p style='font-size:12px; color:gray;'>Este es un mensaje automático. Por favor, no responder a este correo.</p>");
+                cuerpoMensaje.AppendLine("</body></html>");
+
+                string[] destinatarios = { "verifactu@naturalopticsgroup.com" };
+
+                foreach (var destinatario in destinatarios)
+                {
+                    EnviarCorreo(destinatario, "Facturas con formato antiguo registradas", cuerpoMensaje.ToString());
+                }
+            }
+        }
+
+        private static void EnviarCorreo(string para, string asunto, string cuerpo)
+        {
+            try
+            {
+                // Configura tu SMTP
+                SmtpClient smtp = new SmtpClient("fideliza.naturalopticsfideliza.com", 587)
+                {
+                    Credentials = new NetworkCredential("news_naturW52M56@naturalopticsfideliza.com", "Bqt3Vne5"),
+                    EnableSsl = true
+                };
+
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress("news_naturW52M56@naturalopticsfideliza.com");
+                mail.To.Add(para);
+                mail.Subject = asunto;
+                mail.Body = cuerpo;
+                mail.IsBodyHtml = true;
+
+                smtp.Send(mail);
+                Console.WriteLine($"Correo enviado a {para}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al enviar correo a {para}: {ex.Message}");
+            }
+        }
 
         public void buildCreditNote()
         {
             CreditNoteArray.ids = new List<CreditNote_ids>();
             CreditNoteArray.style = "I";
             CreditNote_idsArray.number = factura_abono;
-            CreditNote_idsArray.serie = serie.Substring(0, 1) + "/" + txtTienda.Text + "/" + factura_abono_year;
-            CreditNote_idsArray.issuedTime = date_abo_formated;
+            if (AnteriosVerifactu == false)
+            {
+                CreditNote_idsArray.serie = serie.Substring(0, 1) + "/" + txtTienda.Text + "/" + factura_abono_year;
+            }
+            CreditNote_idsArray.issuedTime = date_abo_formated + " 00:00:00";
             CreditNoteArray.ids.Add(CreditNote_idsArray);
 
             InvoiceArray.creditNote = CreditNoteArray;

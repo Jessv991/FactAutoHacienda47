@@ -86,6 +86,7 @@ namespace FactAutoHacienda47
             //public string serie { get; set; }//la serie es el número para la factura (lleva seri+tienda+factura_abono_year)
             public string number { get; set; }//número de copias
             public string issuedTime { get; set; }
+            public string serie { get; set; }
         }
         public class replacedTicketIds//(replacedTicketIds) este es el array para la factura de sustitución
         {
