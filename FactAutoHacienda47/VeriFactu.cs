@@ -75,7 +75,7 @@ namespace FactAutoHacienda47
         static string descripcion = System.String.Empty;
         static string sqlSiguenteNumFact = System.String.Empty;
         static string filename2 = System.String.Empty;
-        static string venCodigo = "";
+        static string[] venCodigo;
         static string rectificactiva = "N";
         static string factura_a_cliente = "S";
         static string TBAI_Queue = "";
@@ -946,7 +946,19 @@ namespace FactAutoHacienda47
                 }
             }
 
-            venCodigo = vendaTable.Rows[0].Field<int>("VEN_Codi").ToString();
+            venCodigo = vendaTable.AsEnumerable().Select(row => row.Field<int>("VEN_Codi").ToString()).Distinct().ToArray();
+
+            string codigosFormateados;
+
+            if (venCodigo.Length == 1)
+            {
+                codigosFormateados = venCodigo[0]; // solo un código
+            }
+            else
+            {
+                codigosFormateados = string.Join("-", venCodigo); // varios códigos
+            }
+
 
             idArray.number = serie + "/" + tbai_codifactura + "/" + txtTienda.Text + "/" + txtYear.Text;
 
@@ -974,7 +986,7 @@ namespace FactAutoHacienda47
                 MessageBox.Show("Error: Falta el Nombre del Cliente");
                 Environment.Exit(0);
             }
-            descriptionArray.text = descripcion + serie + "/" + tbai_codifactura + "/" + txtYear.Text + " EMITIDA A " + nombre_cliente + " DE LA VENTA " + txtTienda.Text + "/" + venCodigo;
+            descriptionArray.text = descripcion + serie + "/" + tbai_codifactura + "/" + txtYear.Text + " EMITIDA A " + nombre_cliente + " DE LA VENTA " + txtTienda.Text + "/" + codigosFormateados;
             descriptionArray.operationDate = date.ToString("yyyy-MM-dd");
 
             InvoiceArray.description = descriptionArray;//AGREGAMOS DESCRIPTION AL MODELO JSON
@@ -1224,11 +1236,19 @@ namespace FactAutoHacienda47
         {
             if (consultAgainTBAI_Codi == true)
             {
-                tbai_codifactura = Conection.SelectOnce(sql_getTbaiCodi);
+                if (txtReenvio.Text == "R")
+                {
+                    tbai_codifactura = Conection.SelectOnce(sql_getTbaiCodiReenvio);
+                }
+                else
+                {
+                    tbai_codifactura = Conection.SelectOnce(sql_getTbaiCodi);
+                }
                 if ((tbai_codifactura is null) || (tbai_codifactura == ""))
                 {
                     tbai_codifactura = "1";
                 }
+
                 idArray.number = serie + "/" + tbai_codifactura + "/" + txtTienda.Text + "/" + txtYear.Text;
                 apijsonInvoice.invoice = InvoiceArray;
             }
@@ -1379,6 +1399,10 @@ namespace FactAutoHacienda47
 
 
                     }
+                    else if (new_factura.message == "The invoice is duplicated" && txtReenvio.Text == "R")
+                    {
+                        MessageBox.Show("La factura antes de ser reenviada, debe ser archivada de la cola de facturación.", "Error de reenvio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                     else if (new_factura.message == "Incorrect VAT number.")
                     {
                         MessageBox.Show("El número de documento colocado del cliente es incorrecto o no existe.", "Error de numero DNI", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1431,11 +1455,11 @@ namespace FactAutoHacienda47
             string textTipoFact = "";
             string siguenteNumFact = "";
             int tienda = 0;
-            int ventaNumero = 0;
+            int[] ventaNumero = null;
             int numFacturaOld = 0;
             int TBAI_QueueInt = 0;
             int VEN_CodiFactSent = 0;
-            int.TryParse(venCodigo, out VEN_CodiFactSent);
+            int.TryParse(venCodigo[0], out VEN_CodiFactSent);
             DataRow fila = null;
 
             //=======================INICIO DE LA LOGICA========================
@@ -1479,7 +1503,7 @@ namespace FactAutoHacienda47
 
                 TBAI_Queue_Tablet = Conection.SelectRows(sql_maxTbaiQueue);
 
-                if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
+                /*if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
                 {
                     string sql_the_latest_TBAI_Queue = "SELECT MAX(f.TBAI_Queue)FROM FACTURAS_HACIENDA_AUTO f INNER JOIN TIENDADATOS t ON f.FACT_Tienda = t.TIE_Codigo WHERE t.PAR_Valor = '" + TicketBai_DB + "'";
                     string TBAI_Queue = Conection.SelectOnce(sql_the_latest_TBAI_Queue);
@@ -1487,7 +1511,7 @@ namespace FactAutoHacienda47
                     TBAI_QueueInt = TBAI_QueueInt + 1;
                     TBAI_Queue = TBAI_QueueInt.ToString();
                     TBAI_Queue_Tablet.Rows.Add(TBAI_Queue);
-                }
+                }*/
 
             }
 
@@ -1626,13 +1650,17 @@ namespace FactAutoHacienda47
                     // Extraer nombre después de "EMITIDA A"
                     Match matchNombre = Regex.Match(datosFactura, @"EMITIDA A\s+(.+?)\s+DE LA VENTA");
                     // Extraer número final de venta después de "DE LA VENTA"
-                    Match matchVenta = Regex.Match(datosFactura, @"DE LA VENTA\s+[\d]+\/(\d+)");
+                    Match matchVenta = Regex.Match(datosFactura, @"DE LA VENTA\s+\d+\/([\d\-]+)");
 
 
-                    if (matchNombre.Success && matchVenta.Success)
+                    if (matchNombre.Success)
                     {
                         nombreCli = matchNombre.Groups[1].Value.Trim();
-                        int.TryParse(matchVenta.Groups[1].Value, out ventaNumero);
+                    }
+                    
+                    if (matchVenta.Success)
+                    {
+                        ventaNumero = matchVenta.Groups[1].Value.Split('-').Select(v => int.Parse(v)).ToArray();
                     }
 
                     if (TipoFact2 == "F")
@@ -1657,7 +1685,7 @@ namespace FactAutoHacienda47
                     }
 
                     //=====================OBTENER EL VEN_NumFactura DE LA RESPUESTA QUE NOS ARROJA LA API=====================
-                    if (VEN_CodiFactSent == ventaNumero)
+                    if (ventaNumero.Contains(VEN_CodiFactSent))
                     {
                         siguenteNumFact = txtFactura.Text;
                     }
@@ -1670,15 +1698,18 @@ namespace FactAutoHacienda47
 
                     string consultaSQLventa = "";
 
+                    string codigos = string.Join(", ", ventaNumero);
+
+
                     if (TipoFact2 == "F" || TipoFact2 == "FA")
                     {
 
-                        consultaSQLventa = "UPDATE VENDA SET VEN_NumFactura =?, VEN_Factura =?, VEN_DataFactura =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
+                        consultaSQLventa = "UPDATE VENDA SET VEN_NumFactura =?, VEN_Factura =?, VEN_DataFactura =?, VEN_DataDoc =? WHERE VEN_Codi IN (" + codigos + ") AND VEN_Tienda = " + tienda;
 
                     }
                     else
                     {
-                        consultaSQLventa = "UPDATE VENDA SET VEN_Ticket =?, VEN_DataTicket =?, VEN_DataDoc =? WHERE VEN_Codi = " + ventaNumero + " AND VEN_Tienda = " + tienda;
+                        consultaSQLventa = "UPDATE VENDA SET VEN_Ticket =?, VEN_DataTicket =?, VEN_DataDoc =? WHERE VEN_Codi IN (" + codigos + ") AND VEN_Tienda = " + tienda;
 
                     }
 
@@ -1725,7 +1756,7 @@ namespace FactAutoHacienda47
 
                     if (TipoFact2 == "F" || TipoFact2 == "FA")
                     {
-                        if (VEN_CodiFactSent == ventaNumero)
+                        if (ventaNumero.Contains(VEN_CodiFactSent))
                         {
                             cmdInsert.CommandText = sql_updateFactura;
 
@@ -1753,7 +1784,7 @@ namespace FactAutoHacienda47
                     }
                     else
                     {
-                        if (VEN_CodiFactSent == ventaNumero)
+                        if (ventaNumero.Contains(VEN_CodiFactSent))
                         {
                             cmdInsert.CommandText = sql_updateFactura;
                             if (TBAI_Queue_Tablet != null && TBAI_Queue_Tablet.Rows.Count > 0)
@@ -1822,7 +1853,7 @@ namespace FactAutoHacienda47
                 }
 
 
-                if (VEN_CodiFactSent == ventaNumero && string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
+                if (ventaNumero.Contains(VEN_CodiFactSent) && string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
                 {
                     MessageBox.Show(AlertMessage);
                     Environment.Exit(0);
