@@ -108,6 +108,7 @@ namespace FactAutoHacienda47
         static string nombre_cliente = System.String.Empty;
         static string serieFcatSustituida = System.String.Empty;
         static string Save_TBAI_Queue_For_Later = System.String.Empty;
+        static string checkSimple = System.String.Empty;
 
         //=============ARRAYS DE LA API PARA ARMAR INVOICE
         static ArrayList ids = new ArrayList();
@@ -155,6 +156,7 @@ namespace FactAutoHacienda47
         static string tipoOriginal;
         static string tipoProcesado;
         static string condicionVEN_NumserieFacturacion = "IS NULL";
+        static HashSet<string> tiposValidos = new HashSet<string> { "F", "FA", "T", "TA" };//tipo de facturación que están permitidas
 
         private void Inicio_Load(object sender, EventArgs e)
         {
@@ -210,45 +212,39 @@ namespace FactAutoHacienda47
             importe_minimo = Convert.ToDecimal(Conection.SelectOnce(sql_getImporteMinimo));
 
             //===================================================================================
-            tipoOriginal = txtTipo.Text.ToUpper(); // Asegura mayúsculas
-
-            var tiposValidos = new HashSet<string> { "F", "FA", "T", "TA" };
+            tipoOriginal = txtTipo.Text.ToUpper(); // recojemos el valor de tipo de factura que pasan como parámetro
 
 
             string letras = string.Empty;
 
-            /*if (FacturasSerieA == null)
-            {
-                tipoProcesado = tipoOriginal;
-            }*/
-
-            if (tiposValidos.Contains(tipoOriginal))
+            //procesar el tipo de factura o ticket que están pasando
+            if (tiposValidos.Contains(tipoOriginal))//verificamos si el parámetro pasado está en los permitido, si es así, mantenemos el tipoProcesado
             {
                 tipoProcesado = tipoOriginal;
             }
-            else if (tipoOriginal.StartsWith("F"))
+            else if (tipoOriginal.StartsWith("F"))//de lo contrario verificamos si comienza por F
             {
-                if (tipoOriginal.Length == 2)
+                if (tipoOriginal.Length == 2)// si tiene dos letras que no son las permitida, entonces es una factura, con VEN_NumserieFacturacion 
                 {
                     tipoProcesado = "F"; // Ej: FM → F
                     letras = tipoOriginal[1].ToString();
                 }
-                else if (tipoOriginal.Length == 3)
+                else if (tipoOriginal.Length == 3)// si tiene tres letras que no son las permitida, entonces es una factura abono, con VEN_NumserieFacturacion o una factura con VEN_NumserieFacturacion de dos letras
                 {
-                    if (tipoOriginal[1].ToString() == "A")
+                    if (tipoOriginal[1].ToString() == "A")//verificamos que la segunda letra no sea una "A", porque 
                     {
-                        tipoProcesado = "FA"; // Ej: FMA → FA (quitar letra del medio)
+                        tipoProcesado = "FA"; // Ej: FAM → FA (quitar letra del final)
                         letras = tipoOriginal[2].ToString();
                     }
                     else
                     {
-                        tipoProcesado = "F";
+                        tipoProcesado = "F";// Ej: FHM → F (le quitamos las dos letras del final)
                         letras = tipoOriginal[1].ToString() + tipoOriginal[2].ToString();
                     }
                 }
-                else if (tipoOriginal.Length == 4)
+                else if (tipoOriginal.Length == 4)// si tiene cuatro letras que no son las permitida, entonces es una factura abono, con VEN_NumserieFacturacion con 2 letras
                 {
-                    tipoProcesado = "FA"; // Ej: FMA → FA (quitar letra del medio)
+                    tipoProcesado = "FA"; // Ej: FAMH → FA (quitar las dos letra del final)
                     letras = tipoOriginal[2].ToString() + tipoOriginal[3].ToString();
                 }
                 else
@@ -258,18 +254,18 @@ namespace FactAutoHacienda47
 
                 condicionVEN_NumserieFacturacion = "= " + "'" + letras + "'";
             }
-            else if (tipoOriginal.StartsWith("T"))
+            else if (tipoOriginal.StartsWith("T"))//esto hace el mismo proceso que la facturación comparando el parametro
             {
                 if (tipoOriginal.Length == 2)
                 {
-                    tipoProcesado = "T"; // Ej: TM → T
+                    tipoProcesado = "T"; 
                     letras = tipoOriginal[1].ToString();
                 }
                 else if (tipoOriginal.Length == 3)
                 {
                     if (tipoOriginal[1].ToString() == "A")
                     {
-                        tipoProcesado = "TA"; // Ej: FMA → FA (quitar letra del medio)
+                        tipoProcesado = "TA"; 
                         letras = tipoOriginal[2].ToString();
                     }
                     else
@@ -280,19 +276,19 @@ namespace FactAutoHacienda47
                 }
                 else if (tipoOriginal.Length == 4)
                 {
-                    tipoProcesado = "TA"; // Ej: TMHA → TA
+                    tipoProcesado = "TA"; 
                     letras = tipoOriginal[2].ToString() + tipoOriginal[3].ToString();
                 }
                 else
                 {
-                    tipoProcesado = "T"; // Por seguridad
+                    tipoProcesado = "T"; 
                 }
 
                 condicionVEN_NumserieFacturacion = "= " + "'" + letras + "'";
             }
             else
             {
-                tipoProcesado = tipoOriginal; // Si no empieza con F ni T, no tocar
+                tipoProcesado = tipoOriginal; // Si no empieza con F ni T, significa que están cancelando una factura o están pidiendo estado de una factura.
             }
 
             serie = txtTipo.Text;
@@ -337,26 +333,26 @@ namespace FactAutoHacienda47
             sql_getTbaiCodi = "SELECT MAX(TBAI_Codi) + 1 as TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "'";
 
             sql_getTbaiCodiReenvio = "SELECT TBAI_Codi as TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo='" + txtTipo.Text + "' AND VEN_NumFactura = '" + txtFactura.Text + "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "' AND FACT_Tienda = '" + txtTienda.Text + "'";
-            string TBAI_FacturaSustitucion = "";
+            //string TBAI_FacturaSustitucion = "";
             string paramTBAI_FacturaSustitucion = "";
             if (txtReenvio.Text == "S")
             {
-                TBAI_FacturaSustitucion = " AND TBAI_Simple = 'N'";
+                //TBAI_FacturaSustitucion = " AND TBAI_Simple = 'N'";
                 paramTBAI_FacturaSustitucion = ", TBAI_FacturaSustituida = ?";
             }
             sql_updateFactura = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Codi = ?, TBAI_Id = ?, TBAI_Queue = ?, TBAI_Xml = ?, TBAI_Data = ?, TBAI_Hash  = ?, TBAI_UserId=?, TBAI_Estado=?, TBAI_mensaje = ?, TBAI_Qr = ?, TBAI_Url = ?, TBAI_ImgQr = ?" + paramTBAI_FacturaSustitucion + " WHERE " +
                                         "VEN_NumFactura = '" + txtFactura.Text + "' " +
                                         "AND FACT_Tienda = '" + txtTienda.Text + "' " +
                                         "AND FACT_Tipo = '" + txtTipo.Text +
-                                        "' AND TBAI_Simple = '" + sqlTBAI_Simple +
-                                        "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "'" + TBAI_FacturaSustitucion;
+                                        "' AND (TBAI_Queue IS NULL OR TBAI_Queue = '')" +
+                                        " AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "'";
 
             sql_updateFactura_KO = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Mensaje = ? WHERE " +
                                         "VEN_NumFactura = '" + txtFactura.Text + "' " +
                                         "AND FACT_Tienda = '" + txtTienda.Text + "' " +
                                         "AND FACT_Tipo = '" + txtTipo.Text +
-                                        "' AND TBAI_Simple = '" + sqlTBAI_Simple +
-                                        "' AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "'";
+                                        "' AND (TBAI_Queue IS NULL OR TBAI_Queue = '')" +
+                                        "  AND YEAR(VEN_DataFactura) = '" + txtYear.Text + "'";
 
         }
 
@@ -372,15 +368,15 @@ namespace FactAutoHacienda47
                                         "VEN_Ticket = '" + txtFactura.Text + "' " +
                                         "AND FACT_Tienda = '" + txtTienda.Text + "' " +
                                         "AND FACT_Tipo = '" + txtTipo.Text +
-                                        "' AND TBAI_Simple = '" + sqlTBAI_Simple +
-                                        "' AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "'";
+                                        "' AND (TBAI_Queue IS NULL OR TBAI_Queue = '')" +
+                                        "  AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "'";
 
             sql_updateFactura_KO = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Mensaje = ? WHERE " +
                                         "VEN_Ticket = '" + txtFactura.Text + "' " +
                                         "AND FACT_Tienda = '" + txtTienda.Text + "' " +
                                         "AND FACT_Tipo = '" + txtTipo.Text +
-                                        "' AND TBAI_Simple = '" + sqlTBAI_Simple +
-                                        "' AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "'";
+                                        "' AND (TBAI_Queue IS NULL OR TBAI_Queue = '')" +
+                                        "  AND YEAR(VEN_DataTicket) = '" + txtYear.Text + "'";
 
         }
 
@@ -420,7 +416,6 @@ namespace FactAutoHacienda47
 
             DataTable tabletExistAndSimple = Conection.SelectRows(sql_checkTbaiCodi);
             string checkIfExist = "";
-            string checkSimple = "";
             if (tabletExistAndSimple.Rows.Count > 0)
             {
                 var valor = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi");
@@ -452,10 +447,10 @@ namespace FactAutoHacienda47
                     Environment.Exit(0);
                 }
 
-                if ((ImporTotalCheck >= importe_minimo) || txtReenvio.Text == "S" || txtReenvio.Text == "D" || checkSimple == "N")
+                if (txtReenvio.Text == "S" || txtReenvio.Text == "D" || checkSimple == "N")
                 {
                     sqlTBAI_Simple = "N";
-                    this.sameSQLFacturas();
+                    //this.sameSQLFacturas();
                     this.datosCliente();
                 }
                 else
@@ -482,7 +477,7 @@ namespace FactAutoHacienda47
 
         public void facturaAbono()
         {
-            this.sameSQLFacturas();
+            //this.sameSQLFacturas();
             rectificactiva = "S";//ojo! puede que no lo necesites (seguro)
             sql_getVentas = "select v.VEN_ImportTotal, v.VEN_Codi, v.VEN_Tienda, lv.LVN_Codi, c.CLI_Codi, c.CLI_Dni, '02' AS Tipo, v.VEN_Data, v.VEN_Hora, VEN_DataFactura, Ven_DataTicket, c.CLI_Nom + ' ' + c.CLI_Cognom1 + ' ' + c.CLI_Cognom2 as Nom, c.CLI_DefAuditiu AS Pais, ('0' + c.CLI_EstatCivil) as TipoDoc, c.CLI_CodiPostal," +
                                        "(case when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ', Pta ' + C.CLI_Puerta when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Puerta ' + C.CLI_Puerta when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera end) AS Domicili, " +
@@ -569,7 +564,6 @@ namespace FactAutoHacienda47
 
             DataTable tabletExistAndSimple = Conection.SelectRows(sql_checkTbaiCodi);
             string checkIfExist = "";
-            string checkSimple = "";
             if (tabletExistAndSimple.Rows.Count > 0)
             {
                 var valor = tabletExistAndSimple.Rows[0].Field<object>("TBAI_Codi");
@@ -603,10 +597,10 @@ namespace FactAutoHacienda47
                 }
 
                 //================DATOS DEL CLIENTE================
-                if ((ImporTotalCheck >= importe_minimo) || txtReenvio.Text == "S" || txtReenvio.Text == "D" || checkSimple == "N")
+                if (txtReenvio.Text == "S" || txtReenvio.Text == "D" || checkSimple == "N")
                 {
                     sqlTBAI_Simple = "N";
-                    this.sameSQLFacturas();
+                    //this.sameSQLFacturas();
                     this.datosCliente();
                 }
                 else
@@ -1182,7 +1176,7 @@ namespace FactAutoHacienda47
                     @base = Math.Round(total_neto_3, 2),
                     rate = 3,
                     amount = Math.Round(total_neto_3 * Convert.ToDecimal(0.03), 2),
-                    vatOperation = "S1",
+                    vatOperation = "N2",
 
                 };
                 //vatLine4.isUsingSimplifiedRegime = true;
@@ -1380,9 +1374,9 @@ namespace FactAutoHacienda47
                     sql_updateFactura = @"
                                             INSERT INTO FACTURAS_HACIENDA_AUTO 
                                             (FACT_Codi, TBAI_Codi, TBAI_Id, TBAI_Queue, TBAI_Xml, TBAI_Data, TBAI_Hash, 
-                                                TBAI_Estado, TBAI_mensaje, TBAI_Qr, TBAI_Url, TBAI_ImgQr, TBAI_Simple, 
+                                                TBAI_UserId, TBAI_Estado, TBAI_mensaje, TBAI_Qr, TBAI_Url, TBAI_ImgQr, TBAI_Simple, 
                                                     FACT_Tienda, FACT_Tipo, VEN_NumFactura, VEN_DataFactura)
-                                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 }
 
                 string rawFecha = new_factura.chainInfo.issuedTime; // esto es un string ISO 8601
@@ -1502,7 +1496,8 @@ namespace FactAutoHacienda47
                     if (new_factura.message == "The invoice is duplicated")
                     {
 
-                        this.consultDuplicate();
+                        MessageBox.Show("Por favor comunicarse con soporte ténico, faltan registros en la cola y se detecta Duplicado.", "Error de duplicado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //this.consultDuplicate();
 
 
                     }
@@ -1571,8 +1566,22 @@ namespace FactAutoHacienda47
 
             //=======================INICIO DE LA LOGICA========================
 
+            string sql_TicketBai_ActivoFecha = "SELECT fecha.PAR_Valor AS FechaActivo " +
+                                            "FROM TIENDADATOS fecha " +
+                                            "JOIN TIENDADATOS db ON fecha.TIE_Codigo = db.TIE_Codigo " +
+                                            "WHERE fecha.PAR_Key = 'TicketBai_ActivoFecha' " +
+                                            "AND db.PAR_Key = 'TicketBAI_DB' " +
+                                            "AND db.PAR_Valor = '" + TicketBai_DB + "'";
+
+
+
             if (string.IsNullOrEmpty(Save_TBAI_Queue_For_Later) && string.IsNullOrEmpty(TBAI_Queue) && (TBAI_Queue_Tablet == null || TBAI_Queue_Tablet.Rows.Count == 0))
             {
+                string TicketBai_ActivoFecha = Conection.SelectOnce(sql_TicketBai_ActivoFecha);
+
+                int pos = TicketBai_ActivoFecha.LastIndexOf('/');
+                string year_TicketBai_ActivoFecha = TicketBai_ActivoFecha.Substring(pos + 1);
+
                 sql_maxTbaiQueue = @"WITH Queues AS (
                                     SELECT f.FACT_Codi,
                                            f.Tbai_Codi,
@@ -1588,7 +1597,7 @@ namespace FactAutoHacienda47
                                       ON f.Fact_Tienda = activo.TIE_Codigo
                                      AND activo.par_key = 'TicketBAI_Activo'
                                      AND activo.par_valor = 'S'
-                                     WHERE (YEAR(VEN_DataFactura) = '" + txtYear.Text + @"' OR YEAR(VEN_DataTicket) = '" + txtYear.Text + @"')
+                                     WHERE (YEAR(VEN_DataFactura) >= '" + year_TicketBai_ActivoFecha + @"' OR YEAR(VEN_DataTicket) >= '" + year_TicketBai_ActivoFecha + @"')
                                 )
                                 , MaxQueue AS (
                                     SELECT TicketBAI_DB, MAX(QueueNum) AS MaxQueueNum
@@ -1722,7 +1731,12 @@ namespace FactAutoHacienda47
                     yearFact = matchYearFact.Groups[1].Value.Trim();
                 }
 
-                if (TipoFact.Length == 2 && !TipoFact.EndsWith("A"))
+                if (tiposValidos.Contains(tipoOriginal))
+                {
+                    // Ej: F, FA, T, TA
+                    TipoFact2 = TipoFact;
+                }
+                else if (TipoFact.Length == 2 && !TipoFact.EndsWith("A"))
                 {
                     // Ej: FH -> F, TJ -> T
                     TipoFact2 = TipoFact[0].ToString();
@@ -1743,11 +1757,6 @@ namespace FactAutoHacienda47
                 {
                     // Ej: FHA -> FA, TJA -> TA
                     TipoFact2 = TipoFact[0].ToString() + TipoFact[1].ToString();
-                }
-                else
-                {
-                    // Ej: F, FA, T, TA
-                    TipoFact2 = TipoFact;
                 }
 
                 if (!string.IsNullOrEmpty(old_factura.qrcode))
