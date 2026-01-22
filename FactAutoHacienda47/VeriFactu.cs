@@ -1128,12 +1128,13 @@ namespace FactAutoHacienda47
                     @base = Math.Round(total_neto_7, 2),
                     rate = 7,
                     amount = Math.Round(total_neto_7 * Convert.ToDecimal(0.07), 2),
-                    vatOperation = "S1",
+                    vatOperation = "N2", //estaba en S1
 
                 };
                 //vatLine4.isUsingSimplifiedRegime = true;
                 total += vatLine7.@base + vatLine7.amount;
                 totalAmount += vatLine7.amount;
+                vatLine7.tax = "03";
                 vatLine7.vatKey = "08";
 
                 InvoiceArray.vatLines.Add(vatLine7);
@@ -1176,12 +1177,13 @@ namespace FactAutoHacienda47
                     @base = Math.Round(total_neto_3, 2),
                     rate = 3,
                     amount = Math.Round(total_neto_3 * Convert.ToDecimal(0.03), 2),
-                    vatOperation = "N2",
+                    vatOperation = "N2",//estaba en S1
 
                 };
                 //vatLine4.isUsingSimplifiedRegime = true;
                 total += vatLine3.@base + vatLine3.amount;
                 totalAmount += vatLine3.amount;
+                vatLine3.tax = "03";
                 vatLine3.vatKey = "08";
 
                 InvoiceArray.vatLines.Add(vatLine3);
@@ -1189,12 +1191,19 @@ namespace FactAutoHacienda47
 
             if (((total_neto_0 > 0) || (total_neto_0 <= 0)) && total_neto_0_exists)
             {
+                string vatOperation = "E1";//TENGO DUDAS AQUÍ
+
+                if (Iscanarias != "N")
+                {
+                    vatOperation = "N2";
+                }
+
                 var vatLine0 = new VatLine
                 {
                     amount = 0,
                     @base = Math.Round(total_neto_0, 2),
                     rate = 0,
-                    vatOperation = "E1",
+                    vatOperation = vatOperation,
                 };
                 if (recargo_equivalencia_empresa == "S" && Iscanarias == "N")
                 {
@@ -1206,6 +1215,7 @@ namespace FactAutoHacienda47
 
                 if (recargo_equivalencia_empresa == "S" && Iscanarias == "N")
                 {
+
                     vatLine0.vatKey = "18";
                 }
                 else
@@ -1216,6 +1226,7 @@ namespace FactAutoHacienda47
                     }
                     else
                     {
+                        vatLine0.tax = "03";//esto es nuevo
                         vatLine0.vatKey = "08";
                     }
                 }

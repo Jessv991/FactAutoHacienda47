@@ -62,6 +62,8 @@ namespace FactAutoHacienda47
 
         public class VatLine
         {
+            //taxType para Canarias
+            public string tax { get; set; }
             //pendiente vatOperation
             public string vatOperation { get; set; }
             public Decimal @base { get; set; }
