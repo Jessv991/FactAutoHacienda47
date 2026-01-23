@@ -908,7 +908,7 @@ namespace FactAutoHacienda47
                 Environment.Exit(0);
             }
 
-            /*if (vendaTable.Rows[0].Field<string>("CLI_CodiPostal") != null)
+            if (vendaTable.Rows[0].Field<string>("CLI_CodiPostal") != null)
             {
                 recipientArray.postal = vendaTable.Rows[0].Field<string>("CLI_CodiPostal").ToString().Trim();
             }
@@ -916,7 +916,7 @@ namespace FactAutoHacienda47
             {
                 MessageBox.Show("Error: Falta el Código Postal del Cliente");
                 Environment.Exit(0);
-            }*/
+            }
 
             if (vendaTable.Rows[0].Field<string>("Domicili") != null)
             {

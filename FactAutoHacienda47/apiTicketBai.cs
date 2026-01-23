@@ -82,7 +82,7 @@ namespace FactAutoHacienda47
             public string idType { get; set; }//ojo extra
             public string name { get; set; }
             public string country { get; set; }
-            //public string postal { get; set; }
+            public string postal { get; set; }
             public string address { get; set; }
             public bool vat2 { get; set; }
         }//recipient
