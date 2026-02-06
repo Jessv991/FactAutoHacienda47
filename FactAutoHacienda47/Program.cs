@@ -51,6 +51,11 @@ namespace FactAutoHacienda47
                         if (args.Length >= 5)
                         {
                             form.getReenvio(args[4]);
+
+                            if (args.Length >= 6)
+                            {
+                                form.getQueue(args[5]);
+                            }
                         }
                     }
                 }
@@ -74,6 +79,12 @@ namespace FactAutoHacienda47
                         if (args.Length >= 5)
                         {
                             form.getReenvio(args[4]);
+
+
+                            if (args.Length >= 6)
+                            {
+                                form.getQueue(args[5]);
+                            }
                         }
                     }
                 }

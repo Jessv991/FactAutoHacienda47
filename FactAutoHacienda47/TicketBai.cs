@@ -147,7 +147,7 @@ namespace FactAutoHacienda47
 
         private void TicketBai_Load(object sender, EventArgs e)
         {
-            //string mensaje = $"Tipo: {txtTipo.Text}\nFactura: {txtFactura.Text}\nTienda: {txtTienda.Text}\nAño: {txtYear.Text}";
+            //string mensaje = $"Tipo: {txtTipo.Text}\nFactura: {txtFactura.Text}\nTienda: {txtTienda.Text}\nAño: {txtYear.Text}\nQueue: {txtQueue.Text}";
             //MessageBox.Show(mensaje, "Datos de Factura");
             //Environment.Exit(0);
             date_formated = date.ToString("yyyy-MM-dd");
@@ -515,9 +515,9 @@ namespace FactAutoHacienda47
                 ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
 
 
-                if (ven_abono == null || ven_abono.Rows.Count == 0)
+                if (ven_abono.Rows.Count == 0 || ven_abono.Rows[0].IsNull("VEN_DataFactura"))
                 {
-                    MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
+                    MessageBox.Show("Para poder enviar la factura Abono, antes debe facturar la venta (" + subs[0] + ") de la tienda (" + subs[1].Substring(0, 2) + ")", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Environment.Exit(0);
                 }
                 else
@@ -1020,21 +1020,36 @@ namespace FactAutoHacienda47
             if (txtReenvio.Text == "S")
             {
                 InvoiceArray.replacedTicketIds = new List<apiTicketBai.Invoice_id_Substitution>();
-                string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Codi FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo = '" + txtTipo.Text + "' AND FACT_Tienda = " + txtTienda.Text + " AND VEN_NumFactura = " + txtFactura.Text + " AND TBAI_Queue <> '' or TBAI_Queue <> null AND YEAR(VEN_DataFactura) = " + txtYear.Text;
+                string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Codi, FACT_Tipo FROM FACTURAS_HACIENDA_AUTO WHERE TBAI_Queue = '" + txtQueue.Text +"'";
+                string sql_EstadoSust = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Estado = ? WHERE TBAI_Queue = '" + txtQueue.Text +"'";
                 factCancelar = Conection.SelectRows(sql_VEN_DataFactura);
                 string VEN_DataFactura = factCancelar.Rows[0].Field<DateTime>("VEN_DataFactura").ToString();
                 string TBAI_Codi = factCancelar.Rows[0].Field<Int32>("TBAI_Codi").ToString();
+                string FACT_Tipo = factCancelar.Rows[0].Field<string>("FACT_Tipo").ToString();
                 fechaFormat2 = factCancelar.Rows[0].Field<DateTime>("VEN_DataFactura");
-                string date_formated2 = fechaFormat2.ToString("yyyy-MM-dd");
+                string date_formated2 = fechaFormat2.ToString("yyyy-MM-dd");//cambiar sólo año y ponerlo exto
+                string date_formated3 = fechaFormat2.ToString("yyyy");//cambiar sólo año y ponerlo exto
 
                 Invoice_id_SubstitutionArray.number = tbai_codifactura;
-                Invoice_id_SubstitutionArray.serie = serie + "/" + txtTienda.Text + "/" + txtYear.Text;
+                Invoice_id_SubstitutionArray.serie = FACT_Tipo + "/" + txtTienda.Text + "/" + date_formated3;//ambiar año y serie (esto es lo que llega a binovo)
                 Invoice_id_SubstitutionArray.issuedTime = date_formated2;
 
                 InvoiceArray.replacesTicket = true;
                 InvoiceArray.replacedTicketIds.Add(Invoice_id_SubstitutionArray);
 
-                TBAI_FacturaSustituida = serie + "/" + txtTienda.Text + "/" + txtYear.Text + "#" + TBAI_Codi;
+                TBAI_FacturaSustituida = FACT_Tipo + "/" + TBAI_Codi + "/" + txtTienda.Text + "/" + date_formated3;//ambiar año y serie (esto es lo que editamos en la columana TBAI_FacturaSustituida de la base de datos)
+
+                using (System.Data.Odbc.OdbcCommand cmdSust = new System.Data.Odbc.OdbcCommand())
+                {
+                    cmdSust.CommandText = sql_EstadoSust;
+                    System.Data.Odbc.OdbcParameter paramTBAI_Estado = new System.Data.Odbc.OdbcParameter();
+                    paramTBAI_Estado.OdbcType = System.Data.Odbc.OdbcType.Text;
+                    paramTBAI_Estado.Value = "Sustituida";
+                    cmdSust.Parameters.Add(paramTBAI_Estado);
+
+                    Conection.ExecuteCommand(cmdSust);
+
+                }
             }
 
             //=====================DESCRIPCION=====================
@@ -2440,5 +2455,12 @@ namespace FactAutoHacienda47
         {
             txtReenvio.Text = value;
         }
+
+        public void getQueue(string value)
+        {
+            txtQueue.Text = value;
+        }
+
+        
     }
 }

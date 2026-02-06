@@ -477,7 +477,7 @@ namespace FactAutoHacienda47
 
         public void facturaAbono()
         {
-            //this.sameSQLFacturas();
+            this.sameSQLFacturas();
             rectificactiva = "S";//ojo! puede que no lo necesites (seguro)
             sql_getVentas = "select v.VEN_ImportTotal, v.VEN_Codi, v.VEN_Tienda, lv.LVN_Codi, c.CLI_Codi, c.CLI_Dni, '02' AS Tipo, v.VEN_Data, v.VEN_Hora, VEN_DataFactura, Ven_DataTicket, c.CLI_Nom + ' ' + c.CLI_Cognom1 + ' ' + c.CLI_Cognom2 as Nom, c.CLI_DefAuditiu AS Pais, ('0' + c.CLI_EstatCivil) as TipoDoc, c.CLI_CodiPostal," +
                                        "(case when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ', Pta ' + C.CLI_Puerta when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Puerta ' + C.CLI_Puerta when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera when C.CLI_NumEdif is not null and C.CLI_Piso is not null and C.CLI_Puerta is not null and C.CLI_Escalera is not null then C.CLI_Domicili + ' N� ' + C.CLI_NumEdif + ', Piso ' + C.CLI_Piso + ', Pta ' + C.CLI_Puerta + ', Esc. ' + C.CLI_Escalera end) AS Domicili, " +
@@ -513,13 +513,14 @@ namespace FactAutoHacienda47
                 ven_abono = Conection.SelectRows(sql_getFechaVentaAbono);
       
 
-                if (ven_abono == null || ven_abono.Rows.Count == 0)
+                if (ven_abono.Rows.Count == 0 || ven_abono.Rows[0].IsNull("VEN_DataFactura"))
                 {
-                    MessageBox.Show("No puede facturar un Abono de una Venta no facturada (" + subs[0] + "/" + subs[1].Substring(0, 2) + ")");
+                    MessageBox.Show("Para poder enviar la factura Abono, antes debe facturar la venta (" + subs[0] + ") de la tienda (" + subs[1].Substring(0, 2) + ")", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Environment.Exit(0);
                 }
                 else
                 {
+
                     date_abo = ven_abono.Rows[0].Field<DateTime>("VEN_DataFactura");
                     date_abo_formated = date_abo.ToString("yyyy-MM-dd");
                     factura_abono_year = date_abo.ToString("yyyy");
@@ -873,7 +874,7 @@ namespace FactAutoHacienda47
 
             if (txtReenvio.Text == "S")
             {
-                string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Id FROM FACTURAS_HACIENDA_AUTO WHERE FACT_Tipo = '" + txtTipo.Text + "' AND FACT_Tienda = " + txtTienda.Text + " AND VEN_NumFactura = " + txtFactura.Text + " AND TBAI_Queue <> '' or TBAI_Queue <> null AND YEAR(VEN_DataFactura) = " + txtYear.Text;
+                string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Id FROM FACTURAS_HACIENDA_AUTO WHERE TBAI_Queue = '" + txtQueue.Text + "'";
                 dataFactSustitucion = Conection.SelectRows(sql_VEN_DataFactura);
                 var issuedTime = dataFactSustitucion.Rows[0].Field<DateTime>("VEN_DataFactura");
                 serieFcatSustituida = dataFactSustitucion.Rows[0].Field<string>("TBAI_Id").Trim();
@@ -1078,6 +1079,7 @@ namespace FactAutoHacienda47
                 total += vatLine21.@base + vatLine21.amount;
                 totalAmount += vatLine21.amount;
 
+                vatLine21.tax = "01";
                 if (recargo_equivalencia_empresa == "S")
                 {
                     vatLine21.vatKey = "18";
@@ -1109,6 +1111,7 @@ namespace FactAutoHacienda47
                 total += vatLine10.@base + vatLine10.amount;
                 totalAmount += vatLine10.amount;
 
+                vatLine10.tax = "01";
                 if (recargo_equivalencia_empresa == "S")
                 {
                     vatLine10.vatKey = "18";
@@ -1128,14 +1131,14 @@ namespace FactAutoHacienda47
                     @base = Math.Round(total_neto_7, 2),
                     rate = 7,
                     amount = Math.Round(total_neto_7 * Convert.ToDecimal(0.07), 2),
-                    vatOperation = "N2", //estaba en S1
+                    vatOperation = "S1", //estaba en S1
 
                 };
                 //vatLine4.isUsingSimplifiedRegime = true;
                 total += vatLine7.@base + vatLine7.amount;
                 totalAmount += vatLine7.amount;
                 vatLine7.tax = "03";
-                vatLine7.vatKey = "08";
+                vatLine7.vatKey = "01";
 
                 InvoiceArray.vatLines.Add(vatLine7);
             }
@@ -1158,6 +1161,8 @@ namespace FactAutoHacienda47
                 total += vatLine4.@base + vatLine4.amount;
                 totalAmount += vatLine4.amount;
 
+                vatLine4.tax = "01";
+
                 if (recargo_equivalencia_empresa == "S")
                 {
                     vatLine4.vatKey = "18";
@@ -1177,14 +1182,14 @@ namespace FactAutoHacienda47
                     @base = Math.Round(total_neto_3, 2),
                     rate = 3,
                     amount = Math.Round(total_neto_3 * Convert.ToDecimal(0.03), 2),
-                    vatOperation = "N2",//estaba en S1
+                    vatOperation = "S1",//estaba en S1
 
                 };
                 //vatLine4.isUsingSimplifiedRegime = true;
                 total += vatLine3.@base + vatLine3.amount;
                 totalAmount += vatLine3.amount;
                 vatLine3.tax = "03";
-                vatLine3.vatKey = "08";
+                vatLine3.vatKey = "01";
 
                 InvoiceArray.vatLines.Add(vatLine3);
             }
@@ -1215,7 +1220,7 @@ namespace FactAutoHacienda47
 
                 if (recargo_equivalencia_empresa == "S" && Iscanarias == "N")
                 {
-
+                    vatLine0.tax = "01";
                     vatLine0.vatKey = "18";
                 }
                 else
@@ -1223,11 +1228,12 @@ namespace FactAutoHacienda47
                     if (Iscanarias == "N")
                     {
                         vatLine0.vatKey = "01";
+                        vatLine0.tax = "01";
                     }
                     else
                     {
-                        vatLine0.tax = "03";//esto es nuevo
                         vatLine0.vatKey = "08";
+                        //vatLine0.tax = "03";
                     }
                 }
 
@@ -1380,14 +1386,25 @@ namespace FactAutoHacienda47
                     }
 
 
+                    if (tipoProcesado == "F" || tipoProcesado == "FA")
+                    {
+                        sql_updateFactura = @"
+                                                INSERT INTO FACTURAS_HACIENDA_AUTO 
+                                                (FACT_Codi, TBAI_Codi, TBAI_Id, TBAI_Queue, TBAI_Xml, TBAI_Data, TBAI_Hash, 
+                                                    TBAI_UserId, TBAI_Estado, TBAI_mensaje, TBAI_Qr, TBAI_Url, TBAI_ImgQr, TBAI_Simple, 
+                                                        FACT_Tienda, FACT_Tipo, VEN_NumFactura, VEN_DataFactura)
+                                                VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    }
+                    else
+                    {
+                        sql_updateFactura = @"
+                                                INSERT INTO FACTURAS_HACIENDA_AUTO 
+                                                (FACT_Codi, TBAI_Codi, TBAI_Id, TBAI_Queue, TBAI_Xml, TBAI_Data, TBAI_Hash, 
+                                                    TBAI_UserId, TBAI_Estado, TBAI_mensaje, TBAI_Qr, TBAI_Url, TBAI_ImgQr, TBAI_Simple, 
+                                                        FACT_Tienda, FACT_Tipo, VEN_Ticket, VEN_DataTicket)
+                                                VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    }
 
-
-                    sql_updateFactura = @"
-                                            INSERT INTO FACTURAS_HACIENDA_AUTO 
-                                            (FACT_Codi, TBAI_Codi, TBAI_Id, TBAI_Queue, TBAI_Xml, TBAI_Data, TBAI_Hash, 
-                                                TBAI_UserId, TBAI_Estado, TBAI_mensaje, TBAI_Qr, TBAI_Url, TBAI_ImgQr, TBAI_Simple, 
-                                                    FACT_Tienda, FACT_Tipo, VEN_NumFactura, VEN_DataFactura)
-                                            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 }
 
                 string rawFecha = new_factura.chainInfo.issuedTime; // esto es un string ISO 8601
@@ -1507,8 +1524,8 @@ namespace FactAutoHacienda47
                     if (new_factura.message == "The invoice is duplicated")
                     {
 
-                        MessageBox.Show("Por favor comunicarse con soporte ténico, faltan registros en la cola y se detecta Duplicado.", "Error de duplicado", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        //this.consultDuplicate();
+                        //MessageBox.Show("Por favor comunicarse con soporte ténico, faltan registros en la cola y se detecta Duplicado.", "Error de duplicado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        this.consultDuplicate();
 
 
                     }
@@ -2292,6 +2309,11 @@ namespace FactAutoHacienda47
         public void getReenvio(string value)
         {
             txtReenvio.Text = value;
+        }
+
+        public void getQueue(string value)
+        {
+            txtQueue.Text = value;
         }
 
     }

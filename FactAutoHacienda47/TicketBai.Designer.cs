@@ -25,146 +25,168 @@ namespace FactAutoHacienda47
 
         private void InitializeComponent()
         {
-            label1 = new TextBox();
-            label2 = new TextBox();
-            label3 = new TextBox();
-            label4 = new TextBox();
-            label5 = new TextBox();
-            txtTipo = new TextBox();
-            txtFactura = new TextBox();
-            txtTienda = new TextBox();
-            txtYear = new TextBox();
-            txtReenvio = new TextBox();
-            txtJson = new TextBox();
-            pictureBox1 = new PictureBox();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
-            SuspendLayout();
+            this.label1 = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.TextBox();
+            this.txtTipo = new System.Windows.Forms.TextBox();
+            this.txtFactura = new System.Windows.Forms.TextBox();
+            this.txtTienda = new System.Windows.Forms.TextBox();
+            this.txtYear = new System.Windows.Forms.TextBox();
+            this.txtReenvio = new System.Windows.Forms.TextBox();
+            this.txtJson = new System.Windows.Forms.TextBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.txtQueue = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.SuspendLayout();
             // 
             // label1
             // 
-            label1.BackColor = SystemColors.Control;
-            label1.BorderStyle = BorderStyle.None;
-            label1.Location = new Point(24, 31);
-            label1.Name = "label1";
-            label1.Size = new Size(110, 16);
-            label1.TabIndex = 11;
-            label1.Text = "Tipo F FA T TA D S";
+            this.label1.BackColor = System.Drawing.SystemColors.Control;
+            this.label1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.label1.Location = new System.Drawing.Point(21, 27);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(94, 13);
+            this.label1.TabIndex = 11;
+            this.label1.Text = "Tipo F FA T TA D S";
             // 
             // label2
             // 
-            label2.BackColor = SystemColors.Control;
-            label2.BorderStyle = BorderStyle.None;
-            label2.Location = new Point(140, 31);
-            label2.Name = "label2";
-            label2.Size = new Size(108, 16);
-            label2.TabIndex = 12;
-            label2.Text = "Codigo de Factura";
+            this.label2.BackColor = System.Drawing.SystemColors.Control;
+            this.label2.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.label2.Location = new System.Drawing.Point(120, 27);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(93, 13);
+            this.label2.TabIndex = 12;
+            this.label2.Text = "Codigo de Factura";
             // 
             // label3
             // 
-            label3.BackColor = SystemColors.Control;
-            label3.BorderStyle = BorderStyle.None;
-            label3.Location = new Point(254, 31);
-            label3.Name = "label3";
-            label3.Size = new Size(108, 16);
-            label3.TabIndex = 13;
-            label3.Text = "Codigo de Tienda";
+            this.label3.BackColor = System.Drawing.SystemColors.Control;
+            this.label3.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.label3.Location = new System.Drawing.Point(218, 27);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(93, 13);
+            this.label3.TabIndex = 13;
+            this.label3.Text = "Codigo de Tienda";
             // 
             // label4
             // 
-            label4.BackColor = SystemColors.Control;
-            label4.BorderStyle = BorderStyle.None;
-            label4.Location = new Point(368, 31);
-            label4.Name = "label4";
-            label4.Size = new Size(108, 16);
-            label4.TabIndex = 14;
-            label4.Text = "Año";
+            this.label4.BackColor = System.Drawing.SystemColors.Control;
+            this.label4.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.label4.Location = new System.Drawing.Point(315, 27);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(93, 13);
+            this.label4.TabIndex = 14;
+            this.label4.Text = "Año";
             // 
             // label5
             // 
-            label5.BackColor = SystemColors.Control;
-            label5.BorderStyle = BorderStyle.None;
-            label5.Location = new Point(482, 31);
-            label5.Name = "label5";
-            label5.Size = new Size(108, 16);
-            label5.TabIndex = 15;
-            label5.Text = "Reenviar";
+            this.label5.BackColor = System.Drawing.SystemColors.Control;
+            this.label5.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.label5.Location = new System.Drawing.Point(413, 27);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(93, 13);
+            this.label5.TabIndex = 15;
+            this.label5.Text = "Reenviar";
             // 
             // txtTipo
             // 
-            txtTipo.BackColor = SystemColors.Window;
-            txtTipo.Location = new Point(24, 53);
-            txtTipo.Name = "txtTipo";
-            txtTipo.Size = new Size(108, 23);
-            txtTipo.TabIndex = 16;
+            this.txtTipo.BackColor = System.Drawing.SystemColors.Window;
+            this.txtTipo.Location = new System.Drawing.Point(21, 46);
+            this.txtTipo.Name = "txtTipo";
+            this.txtTipo.Size = new System.Drawing.Size(93, 20);
+            this.txtTipo.TabIndex = 16;
             // 
             // txtFactura
             // 
-            txtFactura.Location = new Point(140, 53);
-            txtFactura.Name = "txtFactura";
-            txtFactura.Size = new Size(108, 23);
-            txtFactura.TabIndex = 17;
+            this.txtFactura.Location = new System.Drawing.Point(120, 46);
+            this.txtFactura.Name = "txtFactura";
+            this.txtFactura.Size = new System.Drawing.Size(93, 20);
+            this.txtFactura.TabIndex = 17;
             // 
             // txtTienda
             // 
-            txtTienda.Location = new Point(254, 53);
-            txtTienda.Name = "txtTienda";
-            txtTienda.Size = new Size(108, 23);
-            txtTienda.TabIndex = 18;
+            this.txtTienda.Location = new System.Drawing.Point(218, 46);
+            this.txtTienda.Name = "txtTienda";
+            this.txtTienda.Size = new System.Drawing.Size(93, 20);
+            this.txtTienda.TabIndex = 18;
             // 
             // txtYear
             // 
-            txtYear.Location = new Point(368, 53);
-            txtYear.Name = "txtYear";
-            txtYear.Size = new Size(108, 23);
-            txtYear.TabIndex = 19;
+            this.txtYear.Location = new System.Drawing.Point(315, 46);
+            this.txtYear.Name = "txtYear";
+            this.txtYear.Size = new System.Drawing.Size(93, 20);
+            this.txtYear.TabIndex = 19;
             // 
             // txtReenvio
             // 
-            txtReenvio.Location = new Point(482, 53);
-            txtReenvio.Name = "txtReenvio";
-            txtReenvio.Size = new Size(108, 23);
-            txtReenvio.TabIndex = 20;
+            this.txtReenvio.Location = new System.Drawing.Point(413, 46);
+            this.txtReenvio.Name = "txtReenvio";
+            this.txtReenvio.Size = new System.Drawing.Size(93, 20);
+            this.txtReenvio.TabIndex = 20;
             // 
             // txtJson
             // 
-            txtJson.Location = new Point(24, 95);
-            txtJson.Multiline = true;
-            txtJson.Name = "txtJson";
-            txtJson.Size = new Size(630, 123);
-            txtJson.TabIndex = 21;
+            this.txtJson.Location = new System.Drawing.Point(21, 82);
+            this.txtJson.Multiline = true;
+            this.txtJson.Name = "txtJson";
+            this.txtJson.Size = new System.Drawing.Size(541, 107);
+            this.txtJson.TabIndex = 21;
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(660, 95);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(141, 124);
-            pictureBox1.TabIndex = 22;
-            pictureBox1.TabStop = false;
+            this.pictureBox1.Location = new System.Drawing.Point(566, 82);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(121, 107);
+            this.pictureBox1.TabIndex = 22;
+            this.pictureBox1.TabStop = false;
+            // 
+            // txtQueue
+            // 
+            this.txtQueue.Location = new System.Drawing.Point(512, 46);
+            this.txtQueue.Name = "txtQueue";
+            this.txtQueue.Size = new System.Drawing.Size(93, 20);
+            this.txtQueue.TabIndex = 24;
+            // 
+            // textBox2
+            // 
+            this.textBox2.BackColor = System.Drawing.SystemColors.Control;
+            this.textBox2.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.textBox2.Location = new System.Drawing.Point(512, 27);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(93, 13);
+            this.textBox2.TabIndex = 23;
+            this.textBox2.Text = "Queue";
             // 
             // TicketBai
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(837, 263);
-            Controls.Add(pictureBox1);
-            Controls.Add(txtJson);
-            Controls.Add(txtReenvio);
-            Controls.Add(txtYear);
-            Controls.Add(txtTienda);
-            Controls.Add(txtFactura);
-            Controls.Add(txtTipo);
-            Controls.Add(label5);
-            Controls.Add(label4);
-            Controls.Add(label3);
-            Controls.Add(label2);
-            Controls.Add(label1);
-            Name = "TicketBai";
-            Text = "TicketBai";
-            Load += TicketBai_Load;
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
-            ResumeLayout(false);
-            PerformLayout();
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(717, 228);
+            this.Controls.Add(this.txtQueue);
+            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.txtJson);
+            this.Controls.Add(this.txtReenvio);
+            this.Controls.Add(this.txtYear);
+            this.Controls.Add(this.txtTienda);
+            this.Controls.Add(this.txtFactura);
+            this.Controls.Add(this.txtTipo);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.label1);
+            this.Name = "TicketBai";
+            this.Text = "TicketBai";
+            this.Load += new System.EventHandler(this.TicketBai_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
         }
 
 
@@ -180,5 +202,7 @@ namespace FactAutoHacienda47
         private TextBox txtReenvio;
         private TextBox txtJson;
         private PictureBox pictureBox1;
+        private TextBox txtQueue;
+        private TextBox textBox2;
     }
 }
