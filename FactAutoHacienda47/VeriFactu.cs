@@ -886,6 +886,19 @@ namespace FactAutoHacienda47
                 replacedTicketIdsArray.issuedTime = date_formated2;
                 InvoiceArray.replacedTicketIds.Add(replacedTicketIdsArray);
                 InvoiceArray.type = "F3";
+
+                string sql_EstadoSust = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Estado = ? WHERE TBAI_Queue = '" + txtQueue.Text + "'";
+                using (System.Data.Odbc.OdbcCommand cmdSust = new System.Data.Odbc.OdbcCommand())
+                {
+                    cmdSust.CommandText = sql_EstadoSust;
+                    System.Data.Odbc.OdbcParameter paramTBAI_Estado = new System.Data.Odbc.OdbcParameter();
+                    paramTBAI_Estado.OdbcType = System.Data.Odbc.OdbcType.Text;
+                    paramTBAI_Estado.Value = "Sustituida";
+                    cmdSust.Parameters.Add(paramTBAI_Estado);
+
+                    Conection.ExecuteCommand(cmdSust);
+
+                }
             }
             else if (tipoProcesado == "FA")
             {

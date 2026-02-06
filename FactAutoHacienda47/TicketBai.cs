@@ -1021,7 +1021,6 @@ namespace FactAutoHacienda47
             {
                 InvoiceArray.replacedTicketIds = new List<apiTicketBai.Invoice_id_Substitution>();
                 string sql_VEN_DataFactura = "SELECT VEN_DataFactura, TBAI_Codi, FACT_Tipo FROM FACTURAS_HACIENDA_AUTO WHERE TBAI_Queue = '" + txtQueue.Text +"'";
-                string sql_EstadoSust = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Estado = ? WHERE TBAI_Queue = '" + txtQueue.Text +"'";
                 factCancelar = Conection.SelectRows(sql_VEN_DataFactura);
                 string VEN_DataFactura = factCancelar.Rows[0].Field<DateTime>("VEN_DataFactura").ToString();
                 string TBAI_Codi = factCancelar.Rows[0].Field<Int32>("TBAI_Codi").ToString();
@@ -1039,6 +1038,7 @@ namespace FactAutoHacienda47
 
                 TBAI_FacturaSustituida = FACT_Tipo + "/" + TBAI_Codi + "/" + txtTienda.Text + "/" + date_formated3;//ambiar año y serie (esto es lo que editamos en la columana TBAI_FacturaSustituida de la base de datos)
 
+                string sql_EstadoSust = "UPDATE FACTURAS_HACIENDA_AUTO SET TBAI_Estado = ? WHERE TBAI_Queue = '" + txtQueue.Text +"'";
                 using (System.Data.Odbc.OdbcCommand cmdSust = new System.Data.Odbc.OdbcCommand())
                 {
                     cmdSust.CommandText = sql_EstadoSust;
